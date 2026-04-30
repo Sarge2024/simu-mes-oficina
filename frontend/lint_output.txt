@@ -1,0 +1,717 @@
+
+> frontend@0.0.0 lint
+> eslint .
+
+
+/mnt/46F84CA3F84C935B/SAGACITAS_SaaS/SIMU_MES Oficina/frontend/src/pages/admin/EmpresaMasterPage.tsx
+   18:18  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    @typescript-eslint/no-explicit-any
+   41:5   error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/mnt/46F84CA3F84C935B/SAGACITAS_SaaS/SIMU_MES Oficina/frontend/src/pages/admin/EmpresaMasterPage.tsx:41:5
+  39 |
+  40 |   useEffect(() => {
+> 41 |     fetchEmpresas();
+     |     ^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  42 |   }, []);
+  43 |
+  44 |   const handleSave = async (e: React.FormEvent) => {  react-hooks/set-state-in-effect
+   82:33  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    @typescript-eslint/no-explicit-any
+  101:31  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    @typescript-eslint/no-explicit-any
+  114:6   warning  React Hook useMemo has a missing dependency: 'ActionButtons'. Either include it or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              react-hooks/exhaustive-deps
+
+/mnt/46F84CA3F84C935B/SAGACITAS_SaaS/SIMU_MES Oficina/frontend/src/pages/oficina/OficinaPage.tsx
+   64:11  error    'workingHoursStart' is assigned a value but never used                                                                   @typescript-eslint/no-unused-vars
+   64:30  error    'workingHoursEnd' is assigned a value but never used                                                                     @typescript-eslint/no-unused-vars
+  127:6   warning  React Hook useEffect has a missing dependency: 'isWithinWorkingHours'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+/mnt/46F84CA3F84C935B/SAGACITAS_SaaS/SIMU_MES Oficina/frontend/src/pages/settings/ExpedientePage.tsx
+  23:9   error  'accentColor' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  33:13  error  'date' is assigned a value but never used         @typescript-eslint/no-unused-vars
+
+/mnt/46F84CA3F84C935B/SAGACITAS_SaaS/SIMU_MES Oficina/frontend/src/pages/settings/SettingsPage.tsx
+   53:10  error  Error: Cannot create components during render
+
+Components created during render will reset their state each time they are created. Declare components outside of render.
+
+/mnt/46F84CA3F84C935B/SAGACITAS_SaaS/SIMU_MES Oficina/frontend/src/pages/settings/SettingsPage.tsx:53:10
+  51 |         </header>
+  52 |
+> 53 |         <Section title="Aparência">
+     |          ^^^^^^^ This component is created during render
+  54 |           <OptionRow label="Tema" desc="Modo de cores da interface">
+  55 |             <div className="flex gap-1.5">
+  56 |               {(['dark', 'light'] as ThemeMode[]).map((t) => (
+
+/mnt/46F84CA3F84C935B/SAGACITAS_SaaS/SIMU_MES Oficina/frontend/src/pages/settings/SettingsPage.tsx:8:19
+   6 |   const settings = useUISettingsStore();
+   7 |
+>  8 |   const Section = ({ title, children }: { title: string; children: React.ReactNode }) => (
+     |                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+>  9 |     <div className="bg-surface-900 border border-surface-700 rounded-xl p-6 mb-4">
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 10 |       <h3 className="text-sm font-semibold text-surface-100 uppercase tracking-wider mb-4">{title}</h3>
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 11 |       {children}
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 12 |     </div>
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 13 |   );
+     | ^^^^ The component is created during render here
+  14 |
+  15 |   const OptionRow = ({ label, desc, children }: { label: string; desc?: string; children: React.ReactNode }) => (
+  16 |     <div className="flex items-center justify-between py-3 border-b border-surface-800 last:border-0">                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             react-hooks/static-components
+   54:12  error  Error: Cannot create components during render
+
+Components created during render will reset their state each time they are created. Declare components outside of render.
+
+/mnt/46F84CA3F84C935B/SAGACITAS_SaaS/SIMU_MES Oficina/frontend/src/pages/settings/SettingsPage.tsx:54:12
+  52 |
+  53 |         <Section title="Aparência">
+> 54 |           <OptionRow label="Tema" desc="Modo de cores da interface">
+     |            ^^^^^^^^^ This component is created during render
+  55 |             <div className="flex gap-1.5">
+  56 |               {(['dark', 'light'] as ThemeMode[]).map((t) => (
+  57 |                 <Pill key={t} label={t === 'dark' ? '🌙 Escuro' : '☀️ Claro'} active={settings.theme === t} onClick={() => settings.update({ theme: t })} />
+
+/mnt/46F84CA3F84C935B/SAGACITAS_SaaS/SIMU_MES Oficina/frontend/src/pages/settings/SettingsPage.tsx:15:21
+  13 |   );
+  14 |
+> 15 |   const OptionRow = ({ label, desc, children }: { label: string; desc?: string; children: React.ReactNode }) => (
+     |                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 16 |     <div className="flex items-center justify-between py-3 border-b border-surface-800 last:border-0">
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 17 |       <div>
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 18 |         <p className="text-sm text-surface-200">{label}</p>
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 19 |         {desc && <p className="text-xs text-surface-600 mt-0.5">{desc}</p>}
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 20 |       </div>
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 21 |       <div className="flex items-center gap-2">{children}</div>
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 22 |     </div>
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 23 |   );
+     | ^^^^ The component is created during render here
+  24 |
+  25 |   const Toggle = ({ value, onChange }: { value: boolean; onChange: (v: boolean) => void }) => (
+  26 |     <button                                                                                     react-hooks/static-components
+   62:12  error  Error: Cannot create components during render
+
+Components created during render will reset their state each time they are created. Declare components outside of render.
+
+/mnt/46F84CA3F84C935B/SAGACITAS_SaaS/SIMU_MES Oficina/frontend/src/pages/settings/SettingsPage.tsx:62:12
+  60 |           </OptionRow>
+  61 |
+> 62 |           <OptionRow label="Cor de destaque" desc="Cor principal dos indicadores e gráficos">
+     |            ^^^^^^^^^ This component is created during render
+  63 |             <div className="flex gap-2">
+  64 |               {(Object.keys(ACCENT_MAP) as AccentColor[]).map((c) => (
+  65 |                 <button
+
+/mnt/46F84CA3F84C935B/SAGACITAS_SaaS/SIMU_MES Oficina/frontend/src/pages/settings/SettingsPage.tsx:15:21
+  13 |   );
+  14 |
+> 15 |   const OptionRow = ({ label, desc, children }: { label: string; desc?: string; children: React.ReactNode }) => (
+     |                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 16 |     <div className="flex items-center justify-between py-3 border-b border-surface-800 last:border-0">
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 17 |       <div>
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 18 |         <p className="text-sm text-surface-200">{label}</p>
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 19 |         {desc && <p className="text-xs text-surface-600 mt-0.5">{desc}</p>}
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 20 |       </div>
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 21 |       <div className="flex items-center gap-2">{children}</div>
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 22 |     </div>
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 23 |   );
+     | ^^^^ The component is created during render here
+  24 |
+  25 |   const Toggle = ({ value, onChange }: { value: boolean; onChange: (v: boolean) => void }) => (
+  26 |     <button                                                                                                                                                                                                        react-hooks/static-components
+   77:12  error  Error: Cannot create components during render
+
+Components created during render will reset their state each time they are created. Declare components outside of render.
+
+/mnt/46F84CA3F84C935B/SAGACITAS_SaaS/SIMU_MES Oficina/frontend/src/pages/settings/SettingsPage.tsx:77:12
+  75 |           </OptionRow>
+  76 |
+> 77 |           <OptionRow label="Estilo dos cards" desc="Formato visual dos painéis">
+     |            ^^^^^^^^^ This component is created during render
+  78 |             <div className="flex gap-1.5">
+  79 |               {([
+  80 |                 { key: 'rounded', label: '◉ Arredondado' },
+
+/mnt/46F84CA3F84C935B/SAGACITAS_SaaS/SIMU_MES Oficina/frontend/src/pages/settings/SettingsPage.tsx:15:21
+  13 |   );
+  14 |
+> 15 |   const OptionRow = ({ label, desc, children }: { label: string; desc?: string; children: React.ReactNode }) => (
+     |                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 16 |     <div className="flex items-center justify-between py-3 border-b border-surface-800 last:border-0">
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 17 |       <div>
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 18 |         <p className="text-sm text-surface-200">{label}</p>
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 19 |         {desc && <p className="text-xs text-surface-600 mt-0.5">{desc}</p>}
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 20 |       </div>
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 21 |       <div className="flex items-center gap-2">{children}</div>
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 22 |     </div>
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 23 |   );
+     | ^^^^ The component is created during render here
+  24 |
+  25 |   const Toggle = ({ value, onChange }: { value: boolean; onChange: (v: boolean) => void }) => (
+  26 |     <button                                                                                                                                                                                                                                    react-hooks/static-components
+   90:10  error  Error: Cannot create components during render
+
+Components created during render will reset their state each time they are created. Declare components outside of render.
+
+/mnt/46F84CA3F84C935B/SAGACITAS_SaaS/SIMU_MES Oficina/frontend/src/pages/settings/SettingsPage.tsx:90:10
+  88 |         </Section>
+  89 |
+> 90 |         <Section title="Layout">
+     |          ^^^^^^^ This component is created during render
+  91 |           <OptionRow label="Sidebar" desc="Estilo da barra lateral">
+  92 |             <div className="flex gap-1.5">
+  93 |               {([
+
+/mnt/46F84CA3F84C935B/SAGACITAS_SaaS/SIMU_MES Oficina/frontend/src/pages/settings/SettingsPage.tsx:8:19
+   6 |   const settings = useUISettingsStore();
+   7 |
+>  8 |   const Section = ({ title, children }: { title: string; children: React.ReactNode }) => (
+     |                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+>  9 |     <div className="bg-surface-900 border border-surface-700 rounded-xl p-6 mb-4">
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 10 |       <h3 className="text-sm font-semibold text-surface-100 uppercase tracking-wider mb-4">{title}</h3>
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 11 |       {children}
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 12 |     </div>
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 13 |   );
+     | ^^^^ The component is created during render here
+  14 |
+  15 |   const OptionRow = ({ label, desc, children }: { label: string; desc?: string; children: React.ReactNode }) => (
+  16 |     <div className="flex items-center justify-between py-3 border-b border-surface-800 last:border-0">                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            react-hooks/static-components
+   91:12  error  Error: Cannot create components during render
+
+Components created during render will reset their state each time they are created. Declare components outside of render.
+
+/mnt/46F84CA3F84C935B/SAGACITAS_SaaS/SIMU_MES Oficina/frontend/src/pages/settings/SettingsPage.tsx:91:12
+  89 |
+  90 |         <Section title="Layout">
+> 91 |           <OptionRow label="Sidebar" desc="Estilo da barra lateral">
+     |            ^^^^^^^^^ This component is created during render
+  92 |             <div className="flex gap-1.5">
+  93 |               {([
+  94 |                 { key: 'icons', label: '⬡ Ícones' },
+
+/mnt/46F84CA3F84C935B/SAGACITAS_SaaS/SIMU_MES Oficina/frontend/src/pages/settings/SettingsPage.tsx:15:21
+  13 |   );
+  14 |
+> 15 |   const OptionRow = ({ label, desc, children }: { label: string; desc?: string; children: React.ReactNode }) => (
+     |                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 16 |     <div className="flex items-center justify-between py-3 border-b border-surface-800 last:border-0">
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 17 |       <div>
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 18 |         <p className="text-sm text-surface-200">{label}</p>
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 19 |         {desc && <p className="text-xs text-surface-600 mt-0.5">{desc}</p>}
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 20 |       </div>
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 21 |       <div className="flex items-center gap-2">{children}</div>
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 22 |     </div>
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 23 |   );
+     | ^^^^ The component is created during render here
+  24 |
+  25 |   const Toggle = ({ value, onChange }: { value: boolean; onChange: (v: boolean) => void }) => (
+  26 |     <button                                                                                                                                                                                                                                             react-hooks/static-components
+  102:12  error  Error: Cannot create components during render
+
+Components created during render will reset their state each time they are created. Declare components outside of render.
+
+/mnt/46F84CA3F84C935B/SAGACITAS_SaaS/SIMU_MES Oficina/frontend/src/pages/settings/SettingsPage.tsx:102:12
+  100 |           </OptionRow>
+  101 |
+> 102 |           <OptionRow label="Modo compacto" desc="Reduz espaçamentos para maior densidade de dados">
+      |            ^^^^^^^^^ This component is created during render
+  103 |             <Toggle value={settings.compactMode} onChange={(v) => settings.update({ compactMode: v })} />
+  104 |           </OptionRow>
+  105 |
+
+/mnt/46F84CA3F84C935B/SAGACITAS_SaaS/SIMU_MES Oficina/frontend/src/pages/settings/SettingsPage.tsx:15:21
+  13 |   );
+  14 |
+> 15 |   const OptionRow = ({ label, desc, children }: { label: string; desc?: string; children: React.ReactNode }) => (
+     |                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 16 |     <div className="flex items-center justify-between py-3 border-b border-surface-800 last:border-0">
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 17 |       <div>
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 18 |         <p className="text-sm text-surface-200">{label}</p>
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 19 |         {desc && <p className="text-xs text-surface-600 mt-0.5">{desc}</p>}
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 20 |       </div>
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 21 |       <div className="flex items-center gap-2">{children}</div>
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 22 |     </div>
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 23 |   );
+     | ^^^^ The component is created during render here
+  24 |
+  25 |   const Toggle = ({ value, onChange }: { value: boolean; onChange: (v: boolean) => void }) => (
+  26 |     <button                                                                                                                                                                                                 react-hooks/static-components
+  103:14  error  Error: Cannot create components during render
+
+Components created during render will reset their state each time they are created. Declare components outside of render.
+
+/mnt/46F84CA3F84C935B/SAGACITAS_SaaS/SIMU_MES Oficina/frontend/src/pages/settings/SettingsPage.tsx:103:14
+  101 |
+  102 |           <OptionRow label="Modo compacto" desc="Reduz espaçamentos para maior densidade de dados">
+> 103 |             <Toggle value={settings.compactMode} onChange={(v) => settings.update({ compactMode: v })} />
+      |              ^^^^^^ This component is created during render
+  104 |           </OptionRow>
+  105 |
+  106 |           <OptionRow label="Mensagem de boas-vindas" desc="Exibir saudação com nome do usuário no header">
+
+/mnt/46F84CA3F84C935B/SAGACITAS_SaaS/SIMU_MES Oficina/frontend/src/pages/settings/SettingsPage.tsx:25:18
+  23 |   );
+  24 |
+> 25 |   const Toggle = ({ value, onChange }: { value: boolean; onChange: (v: boolean) => void }) => (
+     |                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 26 |     <button
+     | ^^^^^^^^^^^
+> 27 |       onClick={() => onChange(!value)}
+     | ^^^^^^^^^^^
+> 28 |       className={`relative w-11 h-6 rounded-full transition-colors ${value ? 'bg-primary-600' : 'bg-surface-700'}`}
+     | ^^^^^^^^^^^
+> 29 |     >
+     | ^^^^^^^^^^^
+> 30 |       <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white transition-transform shadow ${value ? 'translate-x-5' : ''}`} />
+     | ^^^^^^^^^^^
+> 31 |     </button>
+     | ^^^^^^^^^^^
+> 32 |   );
+     | ^^^^ The component is created during render here
+  33 |
+  34 |   const Pill = ({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) => (
+  35 |     <button                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      react-hooks/static-components
+  106:12  error  Error: Cannot create components during render
+
+Components created during render will reset their state each time they are created. Declare components outside of render.
+
+/mnt/46F84CA3F84C935B/SAGACITAS_SaaS/SIMU_MES Oficina/frontend/src/pages/settings/SettingsPage.tsx:106:12
+  104 |           </OptionRow>
+  105 |
+> 106 |           <OptionRow label="Mensagem de boas-vindas" desc="Exibir saudação com nome do usuário no header">
+      |            ^^^^^^^^^ This component is created during render
+  107 |             <Toggle value={settings.showWelcome} onChange={(v) => settings.update({ showWelcome: v })} />
+  108 |           </OptionRow>
+  109 |         </Section>
+
+/mnt/46F84CA3F84C935B/SAGACITAS_SaaS/SIMU_MES Oficina/frontend/src/pages/settings/SettingsPage.tsx:15:21
+  13 |   );
+  14 |
+> 15 |   const OptionRow = ({ label, desc, children }: { label: string; desc?: string; children: React.ReactNode }) => (
+     |                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 16 |     <div className="flex items-center justify-between py-3 border-b border-surface-800 last:border-0">
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 17 |       <div>
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 18 |         <p className="text-sm text-surface-200">{label}</p>
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 19 |         {desc && <p className="text-xs text-surface-600 mt-0.5">{desc}</p>}
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 20 |       </div>
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 21 |       <div className="flex items-center gap-2">{children}</div>
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 22 |     </div>
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 23 |   );
+     | ^^^^ The component is created during render here
+  24 |
+  25 |   const Toggle = ({ value, onChange }: { value: boolean; onChange: (v: boolean) => void }) => (
+  26 |     <button                                                                                                                                                                       react-hooks/static-components
+  107:14  error  Error: Cannot create components during render
+
+Components created during render will reset their state each time they are created. Declare components outside of render.
+
+/mnt/46F84CA3F84C935B/SAGACITAS_SaaS/SIMU_MES Oficina/frontend/src/pages/settings/SettingsPage.tsx:107:14
+  105 |
+  106 |           <OptionRow label="Mensagem de boas-vindas" desc="Exibir saudação com nome do usuário no header">
+> 107 |             <Toggle value={settings.showWelcome} onChange={(v) => settings.update({ showWelcome: v })} />
+      |              ^^^^^^ This component is created during render
+  108 |           </OptionRow>
+  109 |         </Section>
+  110 |
+
+/mnt/46F84CA3F84C935B/SAGACITAS_SaaS/SIMU_MES Oficina/frontend/src/pages/settings/SettingsPage.tsx:25:18
+  23 |   );
+  24 |
+> 25 |   const Toggle = ({ value, onChange }: { value: boolean; onChange: (v: boolean) => void }) => (
+     |                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 26 |     <button
+     | ^^^^^^^^^^^
+> 27 |       onClick={() => onChange(!value)}
+     | ^^^^^^^^^^^
+> 28 |       className={`relative w-11 h-6 rounded-full transition-colors ${value ? 'bg-primary-600' : 'bg-surface-700'}`}
+     | ^^^^^^^^^^^
+> 29 |     >
+     | ^^^^^^^^^^^
+> 30 |       <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white transition-transform shadow ${value ? 'translate-x-5' : ''}`} />
+     | ^^^^^^^^^^^
+> 31 |     </button>
+     | ^^^^^^^^^^^
+> 32 |   );
+     | ^^^^ The component is created during render here
+  33 |
+  34 |   const Pill = ({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) => (
+  35 |     <button                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       react-hooks/static-components
+  111:10  error  Error: Cannot create components during render
+
+Components created during render will reset their state each time they are created. Declare components outside of render.
+
+/mnt/46F84CA3F84C935B/SAGACITAS_SaaS/SIMU_MES Oficina/frontend/src/pages/settings/SettingsPage.tsx:111:10
+  109 |         </Section>
+  110 |
+> 111 |         <Section title="Interatividade">
+      |          ^^^^^^^ This component is created during render
+  112 |           <OptionRow label="Animações" desc="Transições e micro-animações de interface">
+  113 |             <Toggle value={settings.animationsEnabled} onChange={(v) => settings.update({ animationsEnabled: v })} />
+  114 |           </OptionRow>
+
+/mnt/46F84CA3F84C935B/SAGACITAS_SaaS/SIMU_MES Oficina/frontend/src/pages/settings/SettingsPage.tsx:8:19
+   6 |   const settings = useUISettingsStore();
+   7 |
+>  8 |   const Section = ({ title, children }: { title: string; children: React.ReactNode }) => (
+     |                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+>  9 |     <div className="bg-surface-900 border border-surface-700 rounded-xl p-6 mb-4">
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 10 |       <h3 className="text-sm font-semibold text-surface-100 uppercase tracking-wider mb-4">{title}</h3>
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 11 |       {children}
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 12 |     </div>
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 13 |   );
+     | ^^^^ The component is created during render here
+  14 |
+  15 |   const OptionRow = ({ label, desc, children }: { label: string; desc?: string; children: React.ReactNode }) => (
+  16 |     <div className="flex items-center justify-between py-3 border-b border-surface-800 last:border-0">                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        react-hooks/static-components
+  112:12  error  Error: Cannot create components during render
+
+Components created during render will reset their state each time they are created. Declare components outside of render.
+
+/mnt/46F84CA3F84C935B/SAGACITAS_SaaS/SIMU_MES Oficina/frontend/src/pages/settings/SettingsPage.tsx:112:12
+  110 |
+  111 |         <Section title="Interatividade">
+> 112 |           <OptionRow label="Animações" desc="Transições e micro-animações de interface">
+      |            ^^^^^^^^^ This component is created during render
+  113 |             <Toggle value={settings.animationsEnabled} onChange={(v) => settings.update({ animationsEnabled: v })} />
+  114 |           </OptionRow>
+  115 |
+
+/mnt/46F84CA3F84C935B/SAGACITAS_SaaS/SIMU_MES Oficina/frontend/src/pages/settings/SettingsPage.tsx:15:21
+  13 |   );
+  14 |
+> 15 |   const OptionRow = ({ label, desc, children }: { label: string; desc?: string; children: React.ReactNode }) => (
+     |                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 16 |     <div className="flex items-center justify-between py-3 border-b border-surface-800 last:border-0">
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 17 |       <div>
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 18 |         <p className="text-sm text-surface-200">{label}</p>
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 19 |         {desc && <p className="text-xs text-surface-600 mt-0.5">{desc}</p>}
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 20 |       </div>
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 21 |       <div className="flex items-center gap-2">{children}</div>
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 22 |     </div>
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 23 |   );
+     | ^^^^ The component is created during render here
+  24 |
+  25 |   const Toggle = ({ value, onChange }: { value: boolean; onChange: (v: boolean) => void }) => (
+  26 |     <button                                                                                                                                                                              react-hooks/static-components
+  113:14  error  Error: Cannot create components during render
+
+Components created during render will reset their state each time they are created. Declare components outside of render.
+
+/mnt/46F84CA3F84C935B/SAGACITAS_SaaS/SIMU_MES Oficina/frontend/src/pages/settings/SettingsPage.tsx:113:14
+  111 |         <Section title="Interatividade">
+  112 |           <OptionRow label="Animações" desc="Transições e micro-animações de interface">
+> 113 |             <Toggle value={settings.animationsEnabled} onChange={(v) => settings.update({ animationsEnabled: v })} />
+      |              ^^^^^^ This component is created during render
+  114 |           </OptionRow>
+  115 |
+  116 |           <OptionRow label="Estilo dos gráficos" desc="Preenchimento visual dos gráficos">
+
+/mnt/46F84CA3F84C935B/SAGACITAS_SaaS/SIMU_MES Oficina/frontend/src/pages/settings/SettingsPage.tsx:25:18
+  23 |   );
+  24 |
+> 25 |   const Toggle = ({ value, onChange }: { value: boolean; onChange: (v: boolean) => void }) => (
+     |                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 26 |     <button
+     | ^^^^^^^^^^^
+> 27 |       onClick={() => onChange(!value)}
+     | ^^^^^^^^^^^
+> 28 |       className={`relative w-11 h-6 rounded-full transition-colors ${value ? 'bg-primary-600' : 'bg-surface-700'}`}
+     | ^^^^^^^^^^^
+> 29 |     >
+     | ^^^^^^^^^^^
+> 30 |       <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white transition-transform shadow ${value ? 'translate-x-5' : ''}`} />
+     | ^^^^^^^^^^^
+> 31 |     </button>
+     | ^^^^^^^^^^^
+> 32 |   );
+     | ^^^^ The component is created during render here
+  33 |
+  34 |   const Pill = ({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) => (
+  35 |     <button                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            react-hooks/static-components
+  116:12  error  Error: Cannot create components during render
+
+Components created during render will reset their state each time they are created. Declare components outside of render.
+
+/mnt/46F84CA3F84C935B/SAGACITAS_SaaS/SIMU_MES Oficina/frontend/src/pages/settings/SettingsPage.tsx:116:12
+  114 |           </OptionRow>
+  115 |
+> 116 |           <OptionRow label="Estilo dos gráficos" desc="Preenchimento visual dos gráficos">
+      |            ^^^^^^^^^ This component is created during render
+  117 |             <div className="flex gap-1.5">
+  118 |               <Pill label="Preenchido" active={settings.chartStyle === 'filled'} onClick={() => settings.update({ chartStyle: 'filled' })} />
+  119 |               <Pill label="Contorno" active={settings.chartStyle === 'outlined'} onClick={() => settings.update({ chartStyle: 'outlined' })} />
+
+/mnt/46F84CA3F84C935B/SAGACITAS_SaaS/SIMU_MES Oficina/frontend/src/pages/settings/SettingsPage.tsx:15:21
+  13 |   );
+  14 |
+> 15 |   const OptionRow = ({ label, desc, children }: { label: string; desc?: string; children: React.ReactNode }) => (
+     |                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 16 |     <div className="flex items-center justify-between py-3 border-b border-surface-800 last:border-0">
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 17 |       <div>
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 18 |         <p className="text-sm text-surface-200">{label}</p>
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 19 |         {desc && <p className="text-xs text-surface-600 mt-0.5">{desc}</p>}
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 20 |       </div>
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 21 |       <div className="flex items-center gap-2">{children}</div>
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 22 |     </div>
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 23 |   );
+     | ^^^^ The component is created during render here
+  24 |
+  25 |   const Toggle = ({ value, onChange }: { value: boolean; onChange: (v: boolean) => void }) => (
+  26 |     <button  react-hooks/static-components
+  118:16  error  Error: Cannot create components during render
+
+Components created during render will reset their state each time they are created. Declare components outside of render.
+
+/mnt/46F84CA3F84C935B/SAGACITAS_SaaS/SIMU_MES Oficina/frontend/src/pages/settings/SettingsPage.tsx:118:16
+  116 |           <OptionRow label="Estilo dos gráficos" desc="Preenchimento visual dos gráficos">
+  117 |             <div className="flex gap-1.5">
+> 118 |               <Pill label="Preenchido" active={settings.chartStyle === 'filled'} onClick={() => settings.update({ chartStyle: 'filled' })} />
+      |                ^^^^ This component is created during render
+  119 |               <Pill label="Contorno" active={settings.chartStyle === 'outlined'} onClick={() => settings.update({ chartStyle: 'outlined' })} />
+  120 |             </div>
+  121 |           </OptionRow>
+
+/mnt/46F84CA3F84C935B/SAGACITAS_SaaS/SIMU_MES Oficina/frontend/src/pages/settings/SettingsPage.tsx:34:16
+  32 |   );
+  33 |
+> 34 |   const Pill = ({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) => (
+     |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 35 |     <button
+     | ^^^^^^^^^^^
+> 36 |       onClick={onClick}
+     | ^^^^^^^^^^^
+> 37 |       className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+     | ^^^^^^^^^^^
+> 38 |         active ? 'bg-primary-600 text-white shadow-lg shadow-primary-600/20' : 'bg-surface-800 text-surface-400 hover:text-surface-200 hover:bg-surface-700'
+     | ^^^^^^^^^^^
+> 39 |       }`}
+     | ^^^^^^^^^^^
+> 40 |     >
+     | ^^^^^^^^^^^
+> 41 |       {label}
+     | ^^^^^^^^^^^
+> 42 |     </button>
+     | ^^^^^^^^^^^
+> 43 |   );
+     | ^^^^ The component is created during render here
+  44 |
+  45 |   return (
+  46 |     <DefaultLayout>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       react-hooks/static-components
+  119:16  error  Error: Cannot create components during render
+
+Components created during render will reset their state each time they are created. Declare components outside of render.
+
+/mnt/46F84CA3F84C935B/SAGACITAS_SaaS/SIMU_MES Oficina/frontend/src/pages/settings/SettingsPage.tsx:119:16
+  117 |             <div className="flex gap-1.5">
+  118 |               <Pill label="Preenchido" active={settings.chartStyle === 'filled'} onClick={() => settings.update({ chartStyle: 'filled' })} />
+> 119 |               <Pill label="Contorno" active={settings.chartStyle === 'outlined'} onClick={() => settings.update({ chartStyle: 'outlined' })} />
+      |                ^^^^ This component is created during render
+  120 |             </div>
+  121 |           </OptionRow>
+  122 |         </Section>
+
+/mnt/46F84CA3F84C935B/SAGACITAS_SaaS/SIMU_MES Oficina/frontend/src/pages/settings/SettingsPage.tsx:34:16
+  32 |   );
+  33 |
+> 34 |   const Pill = ({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) => (
+     |                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 35 |     <button
+     | ^^^^^^^^^^^
+> 36 |       onClick={onClick}
+     | ^^^^^^^^^^^
+> 37 |       className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+     | ^^^^^^^^^^^
+> 38 |         active ? 'bg-primary-600 text-white shadow-lg shadow-primary-600/20' : 'bg-surface-800 text-surface-400 hover:text-surface-200 hover:bg-surface-700'
+     | ^^^^^^^^^^^
+> 39 |       }`}
+     | ^^^^^^^^^^^
+> 40 |     >
+     | ^^^^^^^^^^^
+> 41 |       {label}
+     | ^^^^^^^^^^^
+> 42 |     </button>
+     | ^^^^^^^^^^^
+> 43 |   );
+     | ^^^^ The component is created during render here
+  44 |
+  45 |   return (
+  46 |     <DefaultLayout>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               react-hooks/static-components
+  124:10  error  Error: Cannot create components during render
+
+Components created during render will reset their state each time they are created. Declare components outside of render.
+
+/mnt/46F84CA3F84C935B/SAGACITAS_SaaS/SIMU_MES Oficina/frontend/src/pages/settings/SettingsPage.tsx:124:10
+  122 |         </Section>
+  123 |
+> 124 |         <Section title="Parâmetros da Oficina">
+      |          ^^^^^^^ This component is created during render
+  125 |           <OptionRow label="Horário de Abertura" desc="Início do expediente (afeta cronômetros de OS)">
+  126 |             <input 
+  127 |               type="time" 
+
+/mnt/46F84CA3F84C935B/SAGACITAS_SaaS/SIMU_MES Oficina/frontend/src/pages/settings/SettingsPage.tsx:8:19
+   6 |   const settings = useUISettingsStore();
+   7 |
+>  8 |   const Section = ({ title, children }: { title: string; children: React.ReactNode }) => (
+     |                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+>  9 |     <div className="bg-surface-900 border border-surface-700 rounded-xl p-6 mb-4">
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 10 |       <h3 className="text-sm font-semibold text-surface-100 uppercase tracking-wider mb-4">{title}</h3>
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 11 |       {children}
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 12 |     </div>
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 13 |   );
+     | ^^^^ The component is created during render here
+  14 |
+  15 |   const OptionRow = ({ label, desc, children }: { label: string; desc?: string; children: React.ReactNode }) => (
+  16 |     <div className="flex items-center justify-between py-3 border-b border-surface-800 last:border-0">                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                react-hooks/static-components
+  125:12  error  Error: Cannot create components during render
+
+Components created during render will reset their state each time they are created. Declare components outside of render.
+
+/mnt/46F84CA3F84C935B/SAGACITAS_SaaS/SIMU_MES Oficina/frontend/src/pages/settings/SettingsPage.tsx:125:12
+  123 |
+  124 |         <Section title="Parâmetros da Oficina">
+> 125 |           <OptionRow label="Horário de Abertura" desc="Início do expediente (afeta cronômetros de OS)">
+      |            ^^^^^^^^^ This component is created during render
+  126 |             <input 
+  127 |               type="time" 
+  128 |               value={settings.workingHoursStart} 
+
+/mnt/46F84CA3F84C935B/SAGACITAS_SaaS/SIMU_MES Oficina/frontend/src/pages/settings/SettingsPage.tsx:15:21
+  13 |   );
+  14 |
+> 15 |   const OptionRow = ({ label, desc, children }: { label: string; desc?: string; children: React.ReactNode }) => (
+     |                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 16 |     <div className="flex items-center justify-between py-3 border-b border-surface-800 last:border-0">
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 17 |       <div>
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 18 |         <p className="text-sm text-surface-200">{label}</p>
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 19 |         {desc && <p className="text-xs text-surface-600 mt-0.5">{desc}</p>}
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 20 |       </div>
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 21 |       <div className="flex items-center gap-2">{children}</div>
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 22 |     </div>
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 23 |   );
+     | ^^^^ The component is created during render here
+  24 |
+  25 |   const Toggle = ({ value, onChange }: { value: boolean; onChange: (v: boolean) => void }) => (
+  26 |     <button                                                                                                                                                                                                    react-hooks/static-components
+  134:12  error  Error: Cannot create components during render
+
+Components created during render will reset their state each time they are created. Declare components outside of render.
+
+/mnt/46F84CA3F84C935B/SAGACITAS_SaaS/SIMU_MES Oficina/frontend/src/pages/settings/SettingsPage.tsx:134:12
+  132 |           </OptionRow>
+  133 |
+> 134 |           <OptionRow label="Horário de Fechamento" desc="Fim do expediente (afeta cronômetros de OS)">
+      |            ^^^^^^^^^ This component is created during render
+  135 |             <input 
+  136 |               type="time" 
+  137 |               value={settings.workingHoursEnd} 
+
+/mnt/46F84CA3F84C935B/SAGACITAS_SaaS/SIMU_MES Oficina/frontend/src/pages/settings/SettingsPage.tsx:15:21
+  13 |   );
+  14 |
+> 15 |   const OptionRow = ({ label, desc, children }: { label: string; desc?: string; children: React.ReactNode }) => (
+     |                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 16 |     <div className="flex items-center justify-between py-3 border-b border-surface-800 last:border-0">
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 17 |       <div>
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 18 |         <p className="text-sm text-surface-200">{label}</p>
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 19 |         {desc && <p className="text-xs text-surface-600 mt-0.5">{desc}</p>}
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 20 |       </div>
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 21 |       <div className="flex items-center gap-2">{children}</div>
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 22 |     </div>
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 23 |   );
+     | ^^^^ The component is created during render here
+  24 |
+  25 |   const Toggle = ({ value, onChange }: { value: boolean; onChange: (v: boolean) => void }) => (
+  26 |     <button                                                                                                                                                                                                                                react-hooks/static-components
+
+✖ 29 problems (27 errors, 2 warnings)
+
