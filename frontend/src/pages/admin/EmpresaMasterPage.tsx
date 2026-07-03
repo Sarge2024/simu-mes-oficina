@@ -4,6 +4,7 @@ import { AgGridReact } from 'ag-grid-react';
 import { ModuleRegistry, AllCommunityModule } from 'ag-grid-community';
 import type { ColDef, ICellRendererParams } from 'ag-grid-community';
 import { useUISettingsStore, ACCENT_MAP } from '../../store/useUISettingsStore';
+import Card from '../../components/shared/Card';
 
 ModuleRegistry.registerModules([AllCommunityModule]);
 
@@ -16,12 +17,13 @@ interface Empresa {
   telefone: string;
   email: string;
   configuracoes: Record<string, unknown> | string;
+  tipo_empresa: string;
   ativo: boolean;
 }
 
 export default function EmpresaMasterPage() {
-  const { accent, cardStyle } = useUISettingsStore();
-  const accentColor = ACCENT_MAP[accent].primary;
+  const { accent } = useUISettingsStore();
+  const accentColor = ACCENT_MAP[accent]?.primary || '#6366f1';
 
   const [empresas, setEmpresas] = useState<Empresa[]>([]);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -31,7 +33,7 @@ export default function EmpresaMasterPage() {
     try {
       const res = await fetch('/api/django/api/core/empresas/');
       const data = await res.json();
-      setEmpresas(data);
+      setEmpresas(Array.isArray(data) ? data : (data.results || []));
     } catch (err) {
       console.error('Error fetching empresas:', err);
     }
@@ -108,6 +110,20 @@ export default function EmpresaMasterPage() {
   const columnDefs = useMemo<ColDef[]>(() => [
     { field: 'razao_social', headerName: 'Razão Social', flex: 1 },
     { field: 'cnpj', headerName: 'CNPJ', width: 160 },
+    { 
+      field: 'tipo_empresa', 
+      headerName: 'Tipo', 
+      width: 130,
+      valueFormatter: (params) => {
+        const types: Record<string, string> = {
+          'cliente': 'Cliente',
+          'fornecedor': 'Fornecedor',
+          'ambos': 'Ambos',
+          'matriz_filial': 'Filial/Matriz'
+        };
+        return types[params.value] || params.value;
+      }
+    },
     { field: 'email', headerName: 'E-mail', flex: 1 },
     { field: 'telefone', headerName: 'Telefone', width: 140 },
     { field: 'ativo', headerName: 'Status', width: 100, cellRenderer: StatusBadge },
@@ -117,9 +133,6 @@ export default function EmpresaMasterPage() {
 
   const defaultColDef = useMemo(() => ({ sortable: true, filter: true, resizable: true }), []);
 
-  const cardClass = `bg-surface-900 border border-surface-700 p-6 ${
-    cardStyle === 'sharp' ? 'rounded-none' : cardStyle === 'glass' ? 'rounded-2xl backdrop-blur-xl bg-white/[0.03]' : 'rounded-xl'
-  }`;
 
   return (
     <DefaultLayout>
@@ -138,7 +151,7 @@ export default function EmpresaMasterPage() {
           </button>
         </header>
 
-        <div className={`flex-1 ${cardClass}`}>
+        <Card className="flex-1" padding="md">
           <div className="ag-theme-alpine-dark w-full h-full min-h-[400px]">
             <AgGridReact
               rowData={empresas}
@@ -146,12 +159,12 @@ export default function EmpresaMasterPage() {
               defaultColDef={defaultColDef}
             />
           </div>
-        </div>
+        </Card>
 
         {/* Drawer de Cadastro */}
         {isDrawerOpen && (
           <div className="fixed inset-0 z-50 flex justify-end bg-black/50 backdrop-blur-sm">
-            <div className="w-[500px] h-full bg-surface-900 border-l border-surface-700 shadow-2xl p-6 overflow-y-auto flex flex-col">
+            <Card padding="md" className="w-[500px] h-full border-l shadow-2xl overflow-y-auto flex flex-col border-surface-700">
               <div className="flex justify-between items-center mb-6">
                 <h2 className="text-xl font-bold text-surface-100">{editingEmpresa?.id ? 'Editar Empresa' : 'Nova Empresa'}</h2>
                 <button onClick={() => setIsDrawerOpen(false)} className="text-surface-400 hover:text-surface-200">
@@ -164,6 +177,21 @@ export default function EmpresaMasterPage() {
                   <label className="block text-sm text-surface-400 mb-1">Razão Social *</label>
                   <input required value={editingEmpresa?.razao_social || ''} onChange={(e) => setEditingEmpresa({...editingEmpresa, razao_social: e.target.value})} className="w-full px-3 py-2 rounded-lg bg-surface-800 border border-surface-700 text-surface-100 focus:outline-none focus:ring-2" style={{ '--tw-ring-color': accentColor } as React.CSSProperties} />
                 </div>
+                
+                <div>
+                  <label className="block text-sm text-surface-400 mb-1">Tipo de Empresa *</label>
+                  <select 
+                    value={editingEmpresa?.tipo_empresa || 'matriz_filial'} 
+                    onChange={(e) => setEditingEmpresa({...editingEmpresa, tipo_empresa: e.target.value})} 
+                    className="w-full px-3 py-2 rounded-lg bg-surface-800 border border-surface-700 text-surface-100 focus:outline-none"
+                  >
+                    <option value="matriz_filial">Matriz / Filial (Própria)</option>
+                    <option value="cliente">Cliente (PF/PJ)</option>
+                    <option value="fornecedor">Fornecedor de Peças/Serviços</option>
+                    <option value="ambos">Cliente e Fornecedor</option>
+                  </select>
+                </div>
+
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm text-surface-400 mb-1">CNPJ *</label>
@@ -206,7 +234,7 @@ export default function EmpresaMasterPage() {
                   </button>
                 </div>
               </form>
-            </div>
+            </Card>
           </div>
         )}
       </div>

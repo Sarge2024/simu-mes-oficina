@@ -1,62 +1,58 @@
-version: "3.9"
-
 services:
   db:
     image: postgres:15
-    container_name: simumes_db
     environment:
       POSTGRES_USER: simumes_user
       POSTGRES_PASSWORD: simumes_password
       POSTGRES_DB: simumes_db
     ports:
-      - "5432:5432"
+      - "5004:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     restart: always
 
-  django:
+  django_api:
     build:
       context: ./backend/django_app
       dockerfile: Dockerfile
-    container_name: simumes_django
     command: python manage.py runserver 0.0.0.0:8000
     volumes:
       - ./backend/django_app:/app
     ports:
-      - "8000:8000"
+      - "5012:8000"
     environment:
-      - DB_HOST=db
+      - DB_HOST=host.docker.internal
       - DB_NAME=simumes_db
       - DB_USER=simumes_user
       - DB_PASS=simumes_password
-      - DB_PORT=5432
+      - DB_PORT=5004
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     depends_on:
       - db
     restart: always
 
-  fastapi:
+  fastapi_api:
     build:
       context: ./backend/fastapi_app
       dockerfile: Dockerfile
-    container_name: simumes_fastapi
     command: uvicorn main:app --host 0.0.0.0 --port 8001 --reload
     volumes:
       - ./backend/fastapi_app:/app
     ports:
-      - "8001:8001"
+      - "5013:8001"
     restart: always
 
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    container_name: simumes_frontend
-    command: npm run dev -- --host
+    command: npm run dev -- --host --port 5001
     volumes:
       - ./frontend:/app
       - /app/node_modules
     ports:
-      - "5173:5173"
+      - "5001:5001"
     environment:
       - NODE_ENV=development
     restart: always

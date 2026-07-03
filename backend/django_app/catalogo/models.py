@@ -19,7 +19,7 @@ class TipoComponente(models.TextChoices):
 class Componente(models.Model):
     """Catálogo genérico de peças (O Cadastro Mestre da Oficina)."""
 
-    codigo_interno = models.CharField("Código Interno", max_length=50, unique=True, help_text="Ex: RET-VAL-001 (SKU central)")
+    codigo_interno = models.CharField("Código Interno", max_length=50, unique=True, blank=True, help_text="Ex: RET-001-10X200")
     tipo_componente = models.CharField(
         "Tipo de Componente", max_length=50, choices=TipoComponente.choices, default=TipoComponente.OUTRO
     )
@@ -56,6 +56,30 @@ class Componente(models.Model):
         verbose_name = "Componente"
         verbose_name_plural = "Componentes"
         ordering = ["descricao_generica"]
+
+    def save(self, *args, **kwargs):
+        if not self.codigo_interno:
+            prefixo = self.tipo_componente[:3].upper()
+            
+            # Pegar todos os códigos desse tipo para calcular o sequencial
+            componentes_existentes = Componente.objects.filter(tipo_componente=self.tipo_componente).values_list('codigo_interno', flat=True)
+            max_seq = 0
+            for cod in componentes_existentes:
+                partes = cod.split('-')
+                if len(partes) >= 2 and partes[1].isdigit():
+                    val = int(partes[1])
+                    if val > max_seq:
+                        max_seq = val
+                        
+            seq = max_seq + 1
+            
+            # Formatar medidas (os 6 últimos caracteres)
+            medidas = str(self.medidas_tecnicas).strip()
+            medidas_sufixo = medidas[-6:] if len(medidas) >= 6 else medidas.zfill(6)
+            
+            self.codigo_interno = f"{prefixo}-{seq:03d}-{medidas_sufixo}"
+            
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"[{self.codigo_interno}] {self.descricao_generica}"
@@ -142,3 +166,25 @@ class ServicoCatalogo(models.Model):
 
     def __str__(self):
         return f"[{self.codigo}] {self.descricao}"
+
+class AplicacaoVeiculo(models.Model):
+    """Aplicação Técnica (Componente ↔ Veículo/Versão)."""
+    
+    componente = models.ForeignKey(Componente, on_delete=models.CASCADE, related_name="aplicacoes_veiculos", verbose_name="Componente")
+    versao = models.ForeignKey("veiculos.Versao", on_delete=models.CASCADE, related_name="aplicacoes_componentes", verbose_name="Versão do Veículo")
+    observacoes = models.TextField("Observações", blank=True, default="", help_text="Ex: Apenas modelos flex.")
+    criado_em = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "prod_aplicacao_veiculo"
+        verbose_name = "Aplicação de Veículo"
+        verbose_name_plural = "Aplicações de Veículos"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["componente", "versao"],
+                name="uq_prod_aplicacao_componente_versao",
+            )
+        ]
+
+    def __str__(self):
+        return f"{self.componente.codigo_interno} -> {self.versao}"

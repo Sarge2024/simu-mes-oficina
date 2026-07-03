@@ -50,7 +50,8 @@ export const useServicoStore = create<ServicoStoreState>((set, get) => ({
       const res = await fetch(`${API_BASE}/catalogo/servicos/`);
       if (!res.ok) throw new Error('Falha ao carregar serviços');
       const data = await res.json();
-      set({ listaServicos: data, isLoading: false });
+      const servicos = Array.isArray(data) ? data : (data.results || []);
+      set({ listaServicos: servicos, isLoading: false });
     } catch (err: any) {
       set({ error: err.message, isLoading: false });
     }

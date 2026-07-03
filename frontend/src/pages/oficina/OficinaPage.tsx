@@ -1,10 +1,13 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import DefaultLayout from '../../layouts/DefaultLayout';
 import { AgGridReact } from 'ag-grid-react';
 import { ModuleRegistry, AllCommunityModule } from 'ag-grid-community';
 import type { ColDef } from 'ag-grid-community';
 import { useExpedienteStore } from '../../store/useExpedienteStore';
 import { useAgendaStore } from '../../store/useAgendaStore';
+import PageHeader from '../../components/shared/PageHeader';
+import Card from '../../components/shared/Card';
 
 import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-alpine.css';
@@ -18,6 +21,7 @@ interface OSTimerState {
 }
 
 export default function OficinaPage() {
+  const navigate = useNavigate();
   const { weeklySchedule, exceptions } = useExpedienteStore();
   const { boxes } = useAgendaStore();
   
@@ -94,6 +98,7 @@ export default function OficinaPage() {
     'Em Execução': 'border-accent-400/40 bg-accent-400/5',
     'Concluída': 'border-surface-600/40 bg-surface-800/30',
     'Aguardando Peça': 'border-danger-400/40 bg-danger-400/5',
+    'Aguardando Início': 'border-surface-500/40 bg-surface-500/5',
   };
 
   const dotColors: Record<string, string> = {
@@ -102,6 +107,7 @@ export default function OficinaPage() {
     'Em Execução': 'bg-accent-400',
     'Concluída': 'bg-surface-600',
     'Aguardando Peça': 'bg-danger-400',
+    'Aguardando Início': 'bg-surface-500',
   };
 
   const getDuration = (osId: string | number, stageIdx: number) => {
@@ -119,8 +125,16 @@ export default function OficinaPage() {
 
   const toggleTimer = (osId: number, stageIndex: number) => {
     setTimers(prev => {
-      // Se for iniciar, podemos disparar ações extras se necessário
-      return { ...prev, [osId]: { isRunning: true, activeStageIndex: stageIndex } };
+      const currentState = prev[osId];
+      const isCurrentlyRunning = currentState?.isRunning && currentState?.activeStageIndex === stageIndex;
+      return { ...prev, [osId]: { isRunning: !isCurrentlyRunning, activeStageIndex: stageIndex } };
+    });
+  };
+
+  const selectStage = (osId: number, stageIndex: number) => {
+    setTimers(prev => {
+      const currentState = prev[osId] || { isRunning: false };
+      return { ...prev, [osId]: { ...currentState, activeStageIndex: stageIndex } };
     });
   };
 
@@ -136,16 +150,15 @@ export default function OficinaPage() {
   if (!selectedBox) {
     return (
       <DefaultLayout>
-        <div className="p-6 h-full flex flex-col">
-          <header className="mb-8">
-            <h1 className="text-2xl font-bold text-surface-50">🔧 Boxes de Manutenção</h1>
-            <p className="text-sm text-surface-500 mt-1">Selecione o Box / OS que você irá operar</p>
-          </header>
+        <div className="flex flex-col h-full">
+          <PageHeader 
+            title="🔧 Boxes de Manutenção" 
+            subtitle="Selecione o Box / OS que você irá operar" 
+          />
 
-          <div className="grid grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 2xl:grid-cols-3 gap-4 sm:gap-6">
             {boxes.map((box) => {
               const isOcupado = box.os !== '';
-              // Mock stages for new allocations
               const etapas = [
                 { name: 'Triagem', inicio: null, duracao: 0, concluido: false },
                 { name: 'Diagnóstico', inicio: null, duracao: 0, concluido: false },
@@ -153,71 +166,83 @@ export default function OficinaPage() {
               ];
 
               return (
-                <div 
+                <Card 
                   key={box.box}
+                  padding="none"
+                  hover={isOcupado}
+                  className={`flex flex-col overflow-hidden border-t-4 border-t-primary-300 ${!isOcupado ? 'opacity-70 border-dashed bg-primary-300/5' : 'bg-primary-300/10 shadow-lg shadow-primary-300/10'}`}
                   onClick={() => isOcupado && setSelectedOSId(parseInt(box.os))}
-                  className={`bg-surface-900 border border-surface-700 rounded-xl p-6 transition-all flex flex-col ${
-                    isOcupado 
-                      ? 'cursor-pointer hover:scale-[1.01] hover:border-primary-500/50 hover:shadow-lg hover:shadow-primary-500/10' 
-                      : 'opacity-60 grayscale border-dashed'
-                  }`}
                 >
-                  <div className="flex justify-between items-center mb-4">
-                    <h2 className="text-xl font-bold text-surface-100">{box.box}</h2>
+                  <div className="p-4 sm:p-6 flex flex-col h-full">
+                    <div className="flex justify-between items-center mb-4">
+                      <h2 className="text-xl font-bold text-surface-100">{box.box}</h2>
+                      <div className="flex flex-col items-end gap-2">
+                        {isOcupado ? (
+                          <>
+                            <span className="text-xs font-mono px-2 py-1 bg-primary-300/20 text-primary-300 rounded">OS #{box.os}</span>
+                            <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded shadow-sm border ${
+                              box.status === 'Aguardando Início' ? 'border-surface-500 text-surface-400 bg-surface-500/10' :
+                              box.status === 'Em Execução' ? 'border-accent-500 text-accent-400 bg-accent-500/10' :
+                              box.status === 'Diagnóstico' ? 'border-warning-500 text-warning-400 bg-warning-500/10' :
+                              'border-surface-700 text-surface-500 bg-surface-800'
+                            }`}>
+                              {box.status}
+                            </span>
+                          </>
+                        ) : (
+                          <span className="text-[10px] px-2 py-1 bg-accent-500/10 text-accent-400 rounded font-black uppercase">Livre</span>
+                        )}
+                      </div>
+                    </div>
+                    
                     {isOcupado ? (
-                      <span className="text-xs font-mono px-2 py-1 bg-surface-800 text-primary-400 rounded">OS #{box.os}</span>
+                      <>
+                        <div className="grid grid-cols-2 gap-4 mb-4">
+                          <div>
+                            <p className="text-xs text-surface-500">Veículo</p>
+                            <p className="text-sm text-surface-200 font-medium truncate">{box.veiculo}</p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-surface-500">Colaborador</p>
+                            <p className="text-sm text-surface-200 font-medium">{box.mecanico}</p>
+                          </div>
+                        </div>
+
+                        <div className="mb-6 bg-surface-950 rounded-lg p-3 border border-surface-800">
+                          <p className="text-xs text-surface-500 mb-2 font-semibold">Cronograma de Etapas</p>
+                          <div className="space-y-2">
+                            {etapas.map((etapa, idx) => (
+                              <div key={idx} className="flex justify-between items-center text-xs">
+                                <div className="flex items-center gap-2">
+                                  <span className="text-surface-400">▶</span>
+                                  <span className="text-surface-200">{etapa.name}</span>
+                                </div>
+                                <div className="flex gap-3 text-surface-500 font-mono">
+                                  <span>--/-- --:--</span>
+                                  <span className="w-16 text-right">
+                                    {formatTime(getDuration(box.os, idx))}
+                                  </span>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div className={`mt-auto p-3 rounded-lg border flex items-center justify-between ${statusColors[box.status] || 'border-surface-600 bg-surface-800'}`}>
+                          <div className="flex items-center gap-2">
+                            <div className={`w-2.5 h-2.5 rounded-full ${dotColors[box.status] || 'bg-surface-500'}`} />
+                            <span className="text-sm font-medium text-surface-100">{box.status}</span>
+                          </div>
+                        </div>
+                      </>
                     ) : (
-                      <span className="text-[10px] px-2 py-1 bg-accent-500/10 text-accent-400 rounded font-black uppercase">Livre</span>
+                      <div className="flex-1 flex flex-col items-center justify-center py-8">
+                        <span className="text-4xl mb-2 opacity-20">📥</span>
+                        <p className="text-sm text-surface-500">Aguardando veículo...</p>
+                      </div>
                     )}
                   </div>
-                  
-                  {isOcupado ? (
-                    <>
-                      <div className="grid grid-cols-2 gap-4 mb-4">
-                        <div>
-                          <p className="text-xs text-surface-500">Veículo</p>
-                          <p className="text-sm text-surface-200 font-medium truncate">{box.veiculo}</p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-surface-500">Colaborador</p>
-                          <p className="text-sm text-surface-200 font-medium">{box.mecanico}</p>
-                        </div>
-                      </div>
-
-                      <div className="mb-6 bg-surface-950 rounded-lg p-3 border border-surface-800">
-                        <p className="text-xs text-surface-500 mb-2 font-semibold">Cronograma de Etapas</p>
-                        <div className="space-y-2">
-                          {etapas.map((etapa, idx) => (
-                            <div key={idx} className="flex justify-between items-center text-xs">
-                              <div className="flex items-center gap-2">
-                                <span className="text-surface-400">▶</span>
-                                <span className="text-surface-200">{etapa.name}</span>
-                              </div>
-                              <div className="flex gap-3 text-surface-500 font-mono">
-                                <span>--/-- --:--</span>
-                                <span className="w-16 text-right">
-                                  {formatTime(getDuration(box.os, idx))}
-                                </span>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-
-                      <div className={`mt-auto p-3 rounded-lg border flex items-center justify-between ${statusColors[box.status] || 'border-surface-600 bg-surface-800'}`}>
-                        <div className="flex items-center gap-2">
-                          <div className={`w-2.5 h-2.5 rounded-full ${dotColors[box.status] || 'bg-surface-500'}`} />
-                          <span className="text-sm font-medium text-surface-100">{box.status}</span>
-                        </div>
-                      </div>
-                    </>
-                  ) : (
-                    <div className="flex-1 flex flex-col items-center justify-center py-8">
-                      <span className="text-4xl mb-2 opacity-20">📥</span>
-                      <p className="text-sm text-surface-500">Aguardando veículo...</p>
-                    </div>
-                  )}
-                </div>
+                </Card>
               );
             })}
           </div>
@@ -226,7 +251,6 @@ export default function OficinaPage() {
     );
   }
 
-  // Lista padrão de etapas caso o box não tenha uma específica
   const defaultEtapas = [
     { name: 'Triagem', inicio: null, concluido: true },
     { name: 'Diagnóstico', inicio: null, concluido: false },
@@ -234,8 +258,6 @@ export default function OficinaPage() {
   ];
 
   const currentEtapas = selectedBox.etapas || defaultEtapas;
-
-  // Descobrindo a etapa atual da OS
   const activeStageIdx = currentTimerState?.activeStageIndex ?? currentEtapas.findIndex(e => !e.concluido);
   const safeStageIdx = activeStageIdx === -1 ? currentEtapas.length - 1 : activeStageIdx;
   const currentStage = currentEtapas[safeStageIdx];
@@ -243,36 +265,24 @@ export default function OficinaPage() {
 
   return (
     <DefaultLayout>
-      <div className="p-6">
-        <header className="mb-6 flex items-center justify-between">
-          <div>
-            <div className="flex items-center gap-3 mb-1">
-              <button 
-                onClick={() => setSelectedOSId(null)}
-                className="p-1.5 rounded bg-surface-800 text-surface-400 hover:text-white transition-colors"
-                title="Voltar para a seleção de Box"
-              >
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                </svg>
-              </button>
-              <h1 className="text-2xl font-bold text-surface-50">🔧 {selectedBox.box} — OS #{selectedBox.os}</h1>
-            </div>
-            <p className="text-sm text-surface-500 ml-10">Apontamento individual: {selectedBox.veiculo}</p>
-          </div>
-          
-          <div className={`px-4 py-2 rounded-lg border flex items-center gap-2 ${statusColors[selectedBox.status] || 'border-surface-600 bg-surface-800'}`}>
-            {!isWithinWorkingHours() && (
-               <span className="text-xs bg-warning-500/20 text-warning-400 px-2 py-1 rounded font-bold mr-2">Fora de Expediente (Pausado)</span>
-            )}
-            <div className={`w-2.5 h-2.5 rounded-full ${dotColors[selectedBox.status] || 'bg-surface-500'}`} />
-            <span className="text-sm font-medium text-surface-100">{selectedBox.status}</span>
-          </div>
-        </header>
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6">
+        <PageHeader 
+          title={`🔧 ${selectedBox.box} — OS #${selectedBox.os}`}
+          subtitle={`Apontamento individual: ${selectedBox.veiculo}`}
+          onBack={() => setSelectedOSId(null)}
+        />
+        
+        <div className={`shrink-0 px-4 py-2 rounded-lg border flex items-center gap-2 self-start lg:self-center ${statusColors[selectedBox.status] || 'border-surface-600 bg-surface-800'}`}>
+          {!isWithinWorkingHours() && (
+             <span className="text-xs bg-warning-500/20 text-warning-400 px-2 py-1 rounded font-bold mr-2">Fora de Expediente (Pausado)</span>
+          )}
+          <div className={`w-2.5 h-2.5 rounded-full ${dotColors[selectedBox.status] || 'bg-surface-500'}`} />
+          <span className="text-sm font-medium text-surface-100">{selectedBox.status}</span>
+        </div>
+      </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-          {/* Terminal de Apontamento Individualizado */}
-          <div className="bg-surface-900 border border-surface-700 rounded-xl p-6 shadow-2xl flex flex-col">
+          <Card padding="md" className="flex flex-col shadow-2xl">
             <h2 className="text-lg font-semibold text-surface-100 mb-4">⏱️ Apontamento ({currentStage.name})</h2>
             
             <div className="flex-1 flex flex-col items-center justify-center text-center">
@@ -303,17 +313,34 @@ export default function OficinaPage() {
               <p className="text-xs text-surface-500 font-semibold uppercase mb-2">Todas as Etapas</p>
               <div className="space-y-1 text-xs">
                 {currentEtapas.map((etp, idx) => (
-                  <div key={idx} className={`flex justify-between p-1.5 rounded ${idx === safeStageIdx ? 'bg-surface-800 text-surface-100' : 'text-surface-500'}`}>
-                    <span>{etp.name}</span>
+                  <label key={idx} className={`flex justify-between items-center p-1.5 rounded cursor-pointer transition-colors ${idx === safeStageIdx ? 'bg-surface-800 text-surface-100' : 'text-surface-500 hover:bg-surface-800/50'}`}>
+                    <div className="flex items-center gap-2">
+                      <input 
+                        type="radio" 
+                        name="stageSelector" 
+                        checked={idx === safeStageIdx} 
+                        onChange={() => selectStage(parseInt(selectedBox.os), idx)}
+                        className="w-3 h-3 text-primary-500 focus:ring-primary-500 bg-surface-900 border-surface-700"
+                      />
+                      <span>{etp.name}</span>
+                    </div>
                     <span className="font-mono">{formatTime(getDuration(selectedBox.os, idx))}</span>
-                  </div>
+                  </label>
                 ))}
               </div>
             </div>
-          </div>
 
-          {/* Orçamento Grid */}
-          <div className="bg-surface-900 border border-surface-700 rounded-xl p-6 lg:col-span-2">
+            <div className="mt-4 pt-4 border-t border-surface-800">
+              <button 
+                onClick={() => navigate(`/oficina/fechamento/${selectedBox.os}`)}
+                className="w-full py-3 rounded-xl bg-primary-600 text-white text-sm font-semibold hover:bg-primary-500 transition-colors shadow-lg"
+              >
+                ✓ Concluir OS e Faturar
+              </button>
+            </div>
+          </Card>
+
+          <Card padding="md" className="lg:col-span-2">
             <h2 className="text-lg font-semibold text-surface-100 mb-4">📝 Orçamento V1.0</h2>
             <div className="ag-theme-alpine-dark w-full" style={{ height: '350px' }}>
               <AgGridReact
@@ -334,9 +361,8 @@ export default function OficinaPage() {
                 defaultColDef={defaultColDef}
               />
             </div>
-          </div>
+          </Card>
         </div>
-      </div>
     </DefaultLayout>
   );
 }

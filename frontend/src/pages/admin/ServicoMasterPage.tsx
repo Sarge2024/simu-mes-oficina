@@ -4,6 +4,7 @@ import { AgGridReact } from 'ag-grid-react';
 import { ModuleRegistry, AllCommunityModule } from 'ag-grid-community';
 import type { ColDef } from 'ag-grid-community';
 import { useServicoStore } from '../../store/useServicoStore';
+import Card from '../../components/shared/Card';
 
 import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-alpine.css';
@@ -84,7 +85,7 @@ export default function ServicoMasterPage() {
 
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 flex-1 min-h-0">
           {/* Formulário */}
-          <div className="xl:col-span-1 bg-surface-900 border border-surface-700 rounded-xl p-6 overflow-y-auto">
+          <Card padding="md" className="xl:col-span-1 overflow-y-auto border-surface-700">
             <h2 className="text-lg font-semibold text-surface-100 mb-6 flex items-center gap-2">
               {servicoAtual.id ? '📝 Editar Serviço' : '✨ Novo Serviço'}
             </h2>
@@ -164,24 +165,24 @@ export default function ServicoMasterPage() {
 
               <div className="flex gap-3 pt-6">
                 <button
+                  onClick={resetForm}
+                  className="bg-surface-800 hover:bg-surface-700 text-primary-400 border border-primary-500/30 font-semibold py-2 px-4 rounded-lg transition-colors flex items-center justify-center gap-2"
+                >
+                  <span>✨</span> Novo Serviço
+                </button>
+                <button
                   onClick={salvarServico}
                   disabled={isSaving}
                   className="flex-1 bg-primary-600 hover:bg-primary-500 text-white font-bold py-2 px-4 rounded-lg transition-colors disabled:opacity-50"
                 >
                   {isSaving ? 'Salvando...' : 'Salvar'}
                 </button>
-                <button
-                  onClick={resetForm}
-                  className="bg-surface-800 hover:bg-surface-700 text-surface-300 py-2 px-4 rounded-lg transition-colors"
-                >
-                  Limpar
-                </button>
               </div>
             </div>
-          </div>
+          </Card>
 
           {/* Listagem */}
-          <div className="xl:col-span-2 bg-surface-900 border border-surface-700 rounded-xl p-6 flex flex-col">
+          <Card padding="md" className="xl:col-span-2 flex flex-col border-surface-700">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-lg font-semibold text-surface-100">📋 Serviços Cadastrados</h2>
               {isLoading && <span className="text-xs text-primary-400 animate-pulse">Carregando...</span>}
@@ -195,9 +196,10 @@ export default function ServicoMasterPage() {
                 onRowClicked={(e) => e.data.id && selecionarServico(e.data.id)}
                 pagination={true}
                 paginationPageSize={10}
+                paginationPageSizeSelector={[10, 20, 50, 100]}
               />
             </div>
-          </div>
+          </Card>
         </div>
       </div>
     </DefaultLayout>

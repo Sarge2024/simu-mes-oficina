@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Marca, Modelo, Versao, CotacaoMercado, Ativo
+from .models import Marca, Modelo, Versao, CotacaoMercado, Ativo, Categoria
 
 
 @admin.register(Marca)
@@ -8,10 +8,16 @@ class MarcaAdmin(admin.ModelAdmin):
     search_fields = ("nome_marca",)
 
 
+@admin.register(Categoria)
+class CategoriaAdmin(admin.ModelAdmin):
+    list_display = ("nome", "ativo")
+    search_fields = ("nome",)
+
+
 @admin.register(Modelo)
 class ModeloAdmin(admin.ModelAdmin):
-    list_display = ("nome_modelo", "marca", "categoria_veiculo", "ativo")
-    list_filter = ("categoria_veiculo", "marca")
+    list_display = ("nome_modelo", "marca", "categoria", "ativo")
+    list_filter = ("categoria", "marca")
     search_fields = ("nome_modelo",)
 
 

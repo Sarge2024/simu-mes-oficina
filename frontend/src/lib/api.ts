@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 export const djangoApi = axios.create({
-  baseURL: '/api/django',
+  baseURL: '/api/django/api',
   headers: { 'Content-Type': 'application/json' },
 });
 

@@ -1,15 +1,20 @@
 import { useState } from 'react';
 import { useAuthStore } from '../../store/useAuthStore';
+import { useUISettingsStore } from '../../store/useUISettingsStore';
 
 export default function LoginPage() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const { login, isLoading, error, clearError } = useAuthStore();
+  const updateUI = useUISettingsStore((state) => state.update);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     await login(username, password);
+    if (useAuthStore.getState().isAuthenticated) {
+      updateUI({ sidebar: 'expanded' });
+    }
   };
 
   return (
@@ -42,6 +47,7 @@ export default function LoginPage() {
             <span className="text-primary-400">SIMU</span>
             <span className="text-surface-500">_</span>
             <span className="text-surface-100">MES</span>
+            <span className="text-surface-400 font-normal ml-1.5">Oficina</span>
           </h1>
           <p className="text-surface-500 text-sm mt-1.5 font-medium tracking-wide">
             Manutenção Veicular • Oficina

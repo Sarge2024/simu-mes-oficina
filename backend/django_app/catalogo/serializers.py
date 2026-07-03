@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Componente, ReferenciaFabricante, AplicacaoMotor, ServicoCatalogo
+from .models import Componente, ReferenciaFabricante, AplicacaoMotor, ServicoCatalogo, AplicacaoVeiculo
 
 class ServicoCatalogoSerializer(serializers.ModelSerializer):
     class Meta:
@@ -14,11 +14,10 @@ class ComponenteSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
     def get_similares(self, obj):
-        # Busca componentes do mesmo tipo e medidas, excluindo o próprio
         qs = Componente.objects.filter(
             tipo_componente=obj.tipo_componente,
             medidas_tecnicas=obj.medidas_tecnicas
-        ).exclude(id=obj.id)[:10]  # Limita a 10 resultados
+        ).exclude(id=obj.id)[:10]
         
         return [{
             'id': c.id,
@@ -43,4 +42,14 @@ class AplicacaoMotorSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = AplicacaoMotor
+        fields = '__all__'
+
+class AplicacaoVeiculoSerializer(serializers.ModelSerializer):
+    componente_codigo = serializers.CharField(source='componente.codigo_interno', read_only=True)
+    versao_nome = serializers.CharField(source='versao.nome_versao', read_only=True)
+    modelo_nome = serializers.CharField(source='versao.modelo.nome_modelo', read_only=True)
+    marca_nome = serializers.CharField(source='versao.modelo.marca.nome_marca', read_only=True)
+
+    class Meta:
+        model = AplicacaoVeiculo
         fields = '__all__'

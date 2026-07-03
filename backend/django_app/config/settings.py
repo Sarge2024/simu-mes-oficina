@@ -60,6 +60,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'core.middleware.CurrentUserMiddleware',
 ]
 
 CORS_ALLOW_ALL_ORIGINS = True  # Dev only
@@ -95,7 +96,7 @@ DATABASES = {
         'NAME': os.environ.get('DB_NAME', 'simumes_db'),
         'USER': os.environ.get('DB_USER', 'simumes_user'),
         'PASSWORD': os.environ.get('DB_PASS', 'simumes_password'),
-        'HOST': os.environ.get('DB_HOST', 'localhost'),
+        'HOST': os.environ.get('DB_HOST', 'simumes_db'),
         'PORT': os.environ.get('DB_PORT', '5432'),
     }
 }
@@ -141,3 +142,8 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+REST_FRAMEWORK = {
+    'DEFAULT_PAGINATION_CLASS': 'veiculos.pagination.StandardPagination',
+    'PAGE_SIZE': 50,
+}

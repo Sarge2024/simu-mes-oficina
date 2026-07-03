@@ -56,17 +56,27 @@ class Marca(models.Model):
 
 
 # ──────────────────────────────────────────
+# Veic_Categoria
+# ──────────────────────────────────────────
+class Categoria(models.Model):
+    """Categoria do veículo (ex: Carro, Moto, Caminhão)."""
+    nome = models.CharField("Nome da Categoria", max_length=50, unique=True)
+    ativo = models.BooleanField("Ativo", default=True)
+    criado_em = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "veic_categoria"
+        verbose_name = "Categoria"
+        verbose_name_plural = "Categorias"
+        ordering = ["nome"]
+
+    def __str__(self):
+        return self.nome
+
+
+# ──────────────────────────────────────────
 # Veic_Modelo
 # ──────────────────────────────────────────
-class CategoriaVeiculo(models.TextChoices):
-    CARRO = "carro", "Carro"
-    MOTO = "moto", "Moto"
-    CAMINHAO = "caminhao", "Caminhão"
-    ONIBUS = "onibus", "Ônibus"
-    UTILITARIO = "utilitario", "Utilitário"
-    OUTRO = "outro", "Outro"
-
-
 class Modelo(models.Model):
     """Modelo do veículo vinculado a uma marca."""
 
@@ -77,11 +87,13 @@ class Modelo(models.Model):
         related_name="modelos",
         verbose_name="Marca",
     )
-    categoria_veiculo = models.CharField(
-        "Categoria do Veículo",
-        max_length=20,
-        choices=CategoriaVeiculo.choices,
-        default=CategoriaVeiculo.CARRO,
+    categoria = models.ForeignKey(
+        Categoria,
+        on_delete=models.PROTECT,
+        related_name="modelos",
+        verbose_name="Categoria",
+        null=True,
+        blank=True
     )
     ativo = models.BooleanField("Ativo", default=True)
     criado_em = models.DateTimeField("Criado em", auto_now_add=True)

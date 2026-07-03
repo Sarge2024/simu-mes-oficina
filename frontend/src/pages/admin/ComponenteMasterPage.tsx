@@ -2,11 +2,39 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useComponenteStore } from '../../store/useComponenteStore';
 import DefaultLayout from '../../layouts/DefaultLayout';
+import Card from '../../components/shared/Card';
 import { AgGridReact } from 'ag-grid-react';
 import { ModuleRegistry, AllCommunityModule } from 'ag-grid-community';
 import type { ColDef, ICellRendererParams } from 'ag-grid-community';
 
+// Import mandatory styles for AG Grid
+import 'ag-grid-community/styles/ag-grid.css';
+import 'ag-grid-community/styles/ag-theme-alpine.css';
+
 ModuleRegistry.registerModules([AllCommunityModule]);
+
+// --- Cell Renderers (Outside component to avoid recreation/crashes) ---
+const StockBadge = (props: ICellRendererParams) => {
+  const value = props.value || 0;
+  return (
+    <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${Number(value) > 0 ? 'bg-accent-500/10 text-accent-400' : 'bg-danger-500/10 text-danger-400'}`}>
+      {value}
+    </span>
+  );
+};
+
+const ActionButton = ({ data, onSelect }: { data: any, onSelect: (id: number) => void }) => {
+  if (!data?.id) return null;
+  return (
+    <button
+      type="button"
+      onClick={() => onSelect(data.id)}
+      className="text-primary-400 hover:text-primary-300 font-medium text-xs"
+    >
+      Selecionar
+    </button>
+  );
+};
 
 export default function ComponenteMasterPage() {
   const navigate = useNavigate();
@@ -27,6 +55,7 @@ export default function ComponenteMasterPage() {
   const [isTypeModalOpen, setIsTypeModalOpen] = useState(false);
   const [newType, setNewType] = useState('');
   const [tiposExtras, setTiposExtras] = useState<string[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     carregarComponentes();
@@ -38,26 +67,6 @@ export default function ComponenteMasterPage() {
     await salvarComponente();
   };
 
-  const StockBadge = (props: ICellRendererParams) => {
-    const value = props.value || 0;
-    return (
-      <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${value > 0 ? 'bg-accent-500/10 text-accent-400' : 'bg-danger-500/10 text-danger-400'}`}>
-        {value}
-      </span>
-    );
-  };
-
-  const ActionButton = (props: ICellRendererParams) => {
-    return (
-      <button
-        type="button"
-        onClick={() => selecionarComponente(props.data.id)}
-        className="text-primary-400 hover:text-primary-300 font-medium text-xs"
-      >
-        Selecionar
-      </button>
-    );
-  };
 
   const columnDefs = useMemo<ColDef[]>(() => [
     { field: 'codigo_interno', headerName: 'SKU', width: 130, cellClass: 'font-mono text-primary-400' },
@@ -67,13 +76,55 @@ export default function ComponenteMasterPage() {
       field: 'preco_venda', 
       headerName: 'Preço', 
       width: 120, 
-      valueFormatter: (p) => `R$ ${Number(p.value).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
+      valueFormatter: (p) => {
+        const val = Number(p.value);
+        return isNaN(val) ? 'R$ 0,00' : `R$ ${val.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+      },
       cellClass: 'text-right font-medium'
     },
-    { headerName: 'Ação', width: 100, cellRenderer: ActionButton, cellClass: 'text-center', sortable: false, filter: false }
+    { 
+      headerName: 'Ação', 
+      width: 100, 
+      cellRenderer: (params: ICellRendererParams) => (
+        <ActionButton data={params.data} onSelect={selecionarComponente} />
+      ), 
+      cellClass: 'text-center', 
+      sortable: false, 
+      filter: false 
+    }
+  ], [selecionarComponente]);
+
+  const columnDefsVeiculos = useMemo<ColDef[]>(() => [
+    { field: 'marca_nome', headerName: 'Marca', width: 120 },
+    { field: 'modelo_nome', headerName: 'Modelo', flex: 1 },
+    { field: 'versao_nome', headerName: 'Versão', flex: 2 },
+    { field: 'observacoes', headerName: 'Observações', flex: 1 },
+  ], []);
+
+  const columnDefsReferencias = useMemo<ColDef[]>(() => [
+    { field: 'marca_nome', headerName: 'Marca / Fabricante', flex: 1 },
+    { field: 'codigo_fabricante', headerName: 'Código do Produto', flex: 1, cellClass: 'font-mono text-primary-400' },
+    { field: 'material_construcao', headerName: 'Material', width: 150 }
   ], []);
 
   const defaultColDef = useMemo(() => ({ sortable: true, filter: true, resizable: true }), []);
+
+  const filteredLista = useMemo(() => {
+    if (!searchTerm) return listaComponentes;
+    const term = searchTerm.toLowerCase();
+    return listaComponentes.filter(c => 
+      c.codigo_interno.toLowerCase().includes(term) || 
+      c.descricao_generica.toLowerCase().includes(term)
+    );
+  }, [listaComponentes, searchTerm]);
+
+  const getCodigoPreview = () => {
+    if (componenteAtual.id) return componenteAtual.codigo_interno;
+    const tipo = (componenteAtual.tipo_componente || 'OUT').substring(0, 3).toUpperCase();
+    const medidas = (componenteAtual.medidas_tecnicas || '').trim();
+    const medidasSuf = medidas.length >= 6 ? medidas.slice(-6) : medidas.padStart(6, '0');
+    return `${tipo}-XXX-${medidasSuf}`;
+  };
 
   return (
     <DefaultLayout>
@@ -139,14 +190,20 @@ export default function ComponenteMasterPage() {
         </div>
       )}
 
-      <div className="grid grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         
         {/* Coluna Principal: Formulário (2/3) */}
-        <div className="col-span-2 space-y-8">
-          <form id="componente-form" onSubmit={handleSalvar} className="space-y-8">
+        <div className="lg:col-span-2 space-y-8">
+          {isLoading ? (
+            <Card padding="md" className="border-surface-800 p-12 flex flex-col items-center justify-center text-center">
+              <div className="w-12 h-12 border-4 border-primary-500/20 border-t-primary-500 rounded-full animate-spin mb-4"></div>
+              <p className="text-surface-400 animate-pulse">Carregando dados do componente...</p>
+            </Card>
+          ) : (
+            <form id="componente-form" onSubmit={handleSalvar} className="space-y-8">
             
             {/* Seção 1: Identificação */}
-            <div className="bg-surface-900 border border-surface-800 rounded-xl p-6">
+            <Card padding="md" className="border-surface-800">
               <h2 className="text-lg font-semibold text-surface-100 mb-5 flex items-center gap-2">
                 <span className="w-8 h-8 rounded-lg bg-primary-500/20 text-primary-400 flex items-center justify-center text-sm">
                   1
@@ -156,14 +213,13 @@ export default function ComponenteMasterPage() {
               
               <div className="grid grid-cols-12 gap-5">
                 <div className="col-span-4">
-                  <label className="block text-sm font-medium text-surface-400 mb-2">Código Interno (SKU) *</label>
+                  <label className="block text-sm font-medium text-surface-400 mb-2">Código Interno (SKU)</label>
                   <input 
                     type="text" 
-                    required
-                    value={componenteAtual.codigo_interno}
-                    onChange={(e) => atualizarCampo('codigo_interno', e.target.value)}
-                    className="w-full bg-surface-800 border border-surface-700 text-surface-100 rounded-lg px-4 py-2.5 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 uppercase"
-                    placeholder="Ex: RET-VAL-001"
+                    readOnly
+                    value={getCodigoPreview()}
+                    className="w-full bg-surface-900 border border-surface-700 text-surface-400 rounded-lg px-4 py-2.5 font-mono uppercase cursor-not-allowed"
+                    title="Código gerado automaticamente no salvamento: TIPO-SEQ-MEDIDAS"
                   />
                 </div>
                 
@@ -220,10 +276,10 @@ export default function ComponenteMasterPage() {
                   />
                 </div>
               </div>
-            </div>
+            </Card>
 
             {/* Seção 2: Estoque e Precificação */}
-            <div className="bg-surface-900 border border-surface-800 rounded-xl p-6">
+            <Card padding="md" className="border-surface-800">
               <h2 className="text-lg font-semibold text-surface-100 mb-5 flex items-center gap-2">
                 <span className="w-8 h-8 rounded-lg bg-primary-500/20 text-primary-400 flex items-center justify-center text-sm">
                   2
@@ -246,7 +302,7 @@ export default function ComponenteMasterPage() {
                   <label className="block text-sm font-medium text-surface-400 mb-2">Estoque Atual</label>
                   <input 
                     type="number" 
-                    value={componenteAtual.estoque_atual}
+                    value={componenteAtual.estoque_atual ?? 0}
                     onChange={(e) => atualizarCampo('estoque_atual', e.target.value)}
                     className="w-full bg-surface-800 border border-surface-700 text-surface-100 rounded-lg px-4 py-2.5 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
                   />
@@ -257,10 +313,9 @@ export default function ComponenteMasterPage() {
                   <input 
                     type="number"
                     step="0.01" 
-                    value={componenteAtual.custo_medio_ponderado}
+                    value={componenteAtual.custo_medio_ponderado ?? 0}
                     onChange={(e) => atualizarCampo('custo_medio_ponderado', e.target.value)}
-                    className="w-full bg-surface-800 border border-surface-700 text-surface-100 rounded-lg px-4 py-2.5 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 bg-opacity-50"
-                    disabled // Deve ser atualizado via NFe
+                    className="w-full bg-surface-800 border border-surface-700 text-surface-100 rounded-lg px-4 py-2.5 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
                   />
                 </div>
 
@@ -269,17 +324,17 @@ export default function ComponenteMasterPage() {
                   <input 
                     type="number" 
                     step="0.01"
-                    value={componenteAtual.preco_venda}
+                    value={componenteAtual.preco_venda ?? 0}
                     onChange={(e) => atualizarCampo('preco_venda', e.target.value)}
                     className="w-full bg-surface-800 border border-surface-700 text-surface-100 rounded-lg px-4 py-2.5 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500"
                   />
                 </div>
               </div>
-            </div>
+            </Card>
             
             {/* Seção 3: Produtos Similares */}
             {componenteAtual.id && (
-              <div className="bg-surface-900 border border-surface-800 rounded-xl p-6">
+              <Card padding="md" className="border-surface-800">
                 <h2 className="text-lg font-semibold text-surface-100 mb-5 flex items-center gap-2">
                   <span className="w-8 h-8 rounded-lg bg-primary-500/20 text-primary-400 flex items-center justify-center text-sm">
                     3
@@ -290,19 +345,41 @@ export default function ComponenteMasterPage() {
                 <div className="ag-theme-alpine-dark w-full h-[300px]">
                   <AgGridReact
                     rowData={componenteAtual.similares || []}
-                    columnDefs={columnDefs}
+                    columnDefs={columnDefsReferencias}
                     defaultColDef={defaultColDef}
                     overlayNoRowsTemplate="Nenhum produto similar encontrado com estas especificações técnicas."
                   />
                 </div>
-              </div>
+              </Card>
+            )}
+
+            {/* Seção 4: Veículos Compatíveis */}
+            {componenteAtual.id && (
+              <Card padding="md" className="border-surface-800">
+                <h2 className="text-lg font-semibold text-surface-100 mb-5 flex items-center gap-2">
+                  <span className="w-8 h-8 rounded-lg bg-primary-500/20 text-primary-400 flex items-center justify-center text-sm">
+                    4
+                  </span>
+                  Veículos Compatíveis
+                </h2>
+                
+                <div className="ag-theme-alpine-dark w-full h-[250px]">
+                  <AgGridReact
+                    rowData={componenteAtual.veiculos_compativeis || []}
+                    columnDefs={columnDefsVeiculos}
+                    defaultColDef={defaultColDef}
+                    overlayNoRowsTemplate="Nenhum veículo compatível cadastrado para este componente."
+                  />
+                </div>
+              </Card>
             )}
           </form>
+          )}
         </div>
 
         {/* Coluna Lateral: Busca e Equivalências (1/3) */}
         <div className="col-span-1 space-y-6">
-          <div className="bg-surface-900 border border-surface-800 rounded-xl p-6">
+          <Card padding="md" className="border-surface-800">
             <h3 className="text-sm font-semibold text-surface-100 uppercase tracking-wider mb-4">
               Componentes Cadastrados
             </h3>
@@ -311,6 +388,8 @@ export default function ComponenteMasterPage() {
               <input 
                 type="text" 
                 placeholder="Buscar por código ou descrição..." 
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full bg-surface-800 border border-surface-700 text-surface-100 rounded-lg pl-10 pr-4 py-2 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 text-sm"
               />
               <span className="absolute left-3 top-2.5 text-surface-400">
@@ -322,18 +401,18 @@ export default function ComponenteMasterPage() {
                 <div className="text-center py-8 text-surface-400">Carregando...</div>
             ) : (
                 <div className="space-y-2 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
-                {listaComponentes.map(comp => (
+                {filteredLista.map(comp => (
                     <div 
                     key={comp.id}
                     onClick={() => selecionarComponente(comp.id!)}
                     className={`p-3 rounded-lg border cursor-pointer transition-colors ${
                         componenteAtual.id === comp.id 
-                        ? 'bg-primary-900/20 border-primary-500/50' 
+                        ? 'bg-primary-900/20 border-primary-500/50 ring-1 ring-primary-500/50' 
                         : 'bg-surface-800 border-surface-700 hover:border-surface-600'
                     }`}
                     >
                     <div className="flex justify-between items-start mb-1">
-                        <span className="font-semibold text-surface-100 text-sm">{comp.codigo_interno}</span>
+                        <span className={`font-semibold text-sm ${componenteAtual.id === comp.id ? 'text-primary-400' : 'text-surface-100'}`}>{comp.codigo_interno}</span>
                         <span className="text-xs bg-surface-700 text-surface-300 px-2 py-0.5 rounded">
                         {comp.estoque_atual} {comp.unidade}
                         </span>
@@ -343,9 +422,12 @@ export default function ComponenteMasterPage() {
                     </div>
                     </div>
                 ))}
+                {filteredLista.length === 0 && (
+                  <div className="text-center py-8 text-surface-500 text-sm">Nenhum componente encontrado.</div>
+                )}
                 </div>
             )}
-          </div>
+          </Card>
         </div>
 
       </div>
@@ -353,7 +435,7 @@ export default function ComponenteMasterPage() {
       {/* Modal para Novo Tipo */}
       {isTypeModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-surface-900 border border-surface-700 rounded-2xl p-6 w-full max-w-sm shadow-2xl">
+          <Card padding="lg" className="w-full max-w-sm shadow-2xl border-surface-700">
             <h3 className="text-lg font-bold text-surface-50 mb-4">✨ Cadastrar Novo Tipo</h3>
             <p className="text-xs text-surface-500 mb-6 uppercase tracking-wider">Defina uma nova categoria para o catálogo</p>
             
@@ -401,7 +483,7 @@ export default function ComponenteMasterPage() {
                 </button>
               </div>
             </div>
-          </div>
+          </Card>
         </div>
       )}
       </div>

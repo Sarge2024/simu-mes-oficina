@@ -1,10 +1,19 @@
 import { create } from 'zustand';
+import { fetchAllPages } from './utils';
+import { formatarPlaca, validarPlaca } from '../lib/formatters';
 
 // --- Types ---
+export interface Categoria {
+  id?: number;
+  nome: string;
+  ativo?: boolean;
+}
+
 export interface Marca {
   id: number;
   nome_marca: string;
   ativo: boolean;
+  categorias?: string[];
 }
 
 export interface Modelo {
@@ -12,7 +21,8 @@ export interface Modelo {
   nome_modelo: string;
   marca: number; // ID da marca
   marca_nome?: string;
-  categoria_veiculo: string;
+  categoria?: number;
+  categoria_nome?: string;
   ativo: boolean;
 }
 
@@ -55,14 +65,34 @@ interface VehicleStoreState {
   listaMarcas: Marca[];
   listaModelosFiltrados: Modelo[];
   listaVersoesFiltradas: Versao[];
+  listaCatalogo: Versao[];
   listaClientes: Cliente[];
+  listaCategorias: Categoria[];
   isLoading: boolean;
   isSaving: boolean;
   error: string | null;
 
   // Actions
-  carregarMarcas: () => Promise<void>;
+  carregarMarcas: (categoria?: string) => Promise<void>;
+  carregarCatalogoCompleto: () => Promise<void>;
   carregarClientes: () => Promise<void>;
+  carregarCategorias: () => Promise<void>;
+  atualizarStatusMarca: (id: number, ativo: boolean) => Promise<void>;
+  
+  // Catalog Management
+  criarMarca: (nome: string) => Promise<void>;
+  criarModelo: (nome: string, marcaId: number, categoriaId: number) => Promise<void>;
+  criarVersao: (nome: string, modeloId: number, motorizacao?: string, combustivel?: string) => Promise<void>;
+  
+  // Categoria CRUD
+  criarCategoria: (nome: string) => Promise<void>;
+  atualizarCategoria: (id: number, nome: string) => Promise<void>;
+  excluirCategoria: (id: number) => Promise<void>;
+  atualizarStatusModelo: (id: number, ativo: boolean) => Promise<void>;
+  atualizarStatusVersao: (id: number, ativo: boolean) => Promise<void>;
+  atualizarVersao: (id: number, dados: Partial<Versao>) => Promise<void>;
+  excluirVersao: (id: number) => Promise<void>;
+
   selecionarMarca: (marcaId: number) => Promise<void>;
   selecionarModelo: (modeloId: number) => Promise<void>;
   atualizarCampoVeiculo: (campo: keyof Veiculo, valor: any) => void;
@@ -90,29 +120,289 @@ export const useVehicleStore = create<VehicleStoreState>((set, get) => ({
   listaMarcas: [],
   listaModelosFiltrados: [],
   listaVersoesFiltradas: [],
+  listaCatalogo: [],
   listaClientes: [],
+  listaCategorias: [],
   isLoading: false,
   isSaving: false,
   error: null,
 
-  carregarMarcas: async () => {
+  carregarCategorias: async () => {
     set({ isLoading: true, error: null });
     try {
-      const res = await fetch(`${API_BASE}/veiculos/marcas/`);
-      if (!res.ok) throw new Error('Falha ao carregar marcas');
-      const data = await res.json();
-      set({ listaMarcas: data, isLoading: false });
+      const cats = await fetchAllPages(`${API_BASE}/veiculos/categorias/`);
+      set({ listaCategorias: cats, isLoading: false });
+    } catch (err: any) {
+      console.error(err);
+      set({ error: err.message, isLoading: false });
+    }
+  },
+
+  criarCategoria: async (nome: string) => {
+    set({ isSaving: true, error: null });
+    try {
+      const res = await fetch(`${API_BASE}/veiculos/categorias/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nome, ativo: true })
+      });
+      if (!res.ok) throw new Error('Falha ao criar categoria');
+      const text = await res.text();
+      const data = text ? JSON.parse(text) : null;
+      if (data) {
+        const newState = [...get().listaCategorias, data];
+        set({ listaCategorias: newState, isSaving: false });
+        // Recarrega para garantir sincronia total
+        get().carregarCategorias();
+      }
+    } catch (err: any) {
+      set({ error: err.message, isSaving: false });
+      throw err;
+    }
+  },
+
+  atualizarCategoria: async (id: number, nome: string) => {
+    set({ isSaving: true, error: null });
+    try {
+      const res = await fetch(`${API_BASE}/veiculos/categorias/${id}/`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nome })
+      });
+      if (!res.ok) throw new Error('Falha ao atualizar categoria');
+      const text = await res.text();
+      const data = text ? JSON.parse(text) : null;
+      if (data) {
+        set((state) => ({ 
+          listaCategorias: state.listaCategorias.map(c => c.id === id ? data : c),
+          isSaving: false 
+        }));
+      }
+    } catch (err: any) {
+      set({ error: err.message, isSaving: false });
+      throw err;
+    }
+  },
+
+  excluirCategoria: async (id: number) => {
+    set({ isLoading: true, error: null });
+    try {
+      const res = await fetch(`${API_BASE}/veiculos/categorias/${id}/`, {
+        method: 'DELETE'
+      });
+      if (!res.ok) throw new Error('Falha ao excluir categoria');
+      set((state) => ({ 
+        listaCategorias: state.listaCategorias.filter(c => c.id !== id),
+        isLoading: false 
+      }));
+    } catch (err: any) {
+      set({ error: err.message, isLoading: false });
+      throw err;
+    }
+  },
+
+  // Actions
+
+  carregarMarcas: async (categoria?: string) => {
+    set({ isLoading: true, error: null });
+    try {
+      const url = categoria ? `${API_BASE}/veiculos/marcas/?categoria=${categoria}` : `${API_BASE}/veiculos/marcas/`;
+      const marcas = await fetchAllPages(url);
+      set({ listaMarcas: marcas, isLoading: false });
     } catch (err: any) {
       set({ error: err.message, isLoading: false });
     }
   },
 
+  carregarCatalogoCompleto: async () => {
+    set({ isLoading: true, error: null });
+    try {
+      const versoes = await fetchAllPages(`${API_BASE}/veiculos/versoes/?page_size=200`);
+      set({ listaCatalogo: versoes, isLoading: false });
+    } catch (err: any) {
+      set({ error: err.message, isLoading: false });
+    }
+  },
+
+  atualizarStatusMarca: async (id: number, ativo: boolean) => {
+    try {
+      const res = await fetch(`${API_BASE}/veiculos/marcas/${id}/`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ativo })
+      });
+      if (!res.ok) throw new Error('Falha ao atualizar marca');
+      
+      // Atualiza localmente
+      set((state) => ({
+        listaMarcas: state.listaMarcas.map(m => m.id === id ? { ...m, ativo } : m)
+      }));
+    } catch (err: any) {
+      console.error(err);
+    }
+  },
+
+  criarMarca: async (nome: string) => {
+    set({ isSaving: true, error: null });
+    try {
+      const res = await fetch(`${API_BASE}/veiculos/marcas/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nome_marca: nome, ativo: true })
+      });
+      
+      const text = await res.text();
+      let data = null;
+      try { data = text ? JSON.parse(text) : null; } catch { data = null; }
+
+      if (!res.ok) {
+        throw new Error(data ? JSON.stringify(data) : 'Erro ao criar marca');
+      }
+      
+      if (data) {
+        set((state) => ({ listaMarcas: [...state.listaMarcas, data], isSaving: false }));
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Falha ao criar marca';
+      set({ error: msg, isSaving: false });
+      throw err;
+    }
+  },
+
+  criarModelo: async (nome: string, marcaId: number, categoriaId: number) => {
+    set({ isSaving: true, error: null });
+    try {
+      const res = await fetch(`${API_BASE}/veiculos/modelos/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          nome_modelo: nome, 
+          marca: marcaId, 
+          categoria: categoriaId, 
+          ativo: true 
+        })
+      });
+
+      const text = await res.text();
+      let data = null;
+      try { data = text ? JSON.parse(text) : null; } catch { data = null; }
+
+      if (!res.ok) {
+        throw new Error(data ? JSON.stringify(data) : 'Erro ao criar modelo');
+      }
+
+      if (data) {
+        set((state) => ({ 
+          listaModelosFiltrados: [...state.listaModelosFiltrados, data],
+          isSaving: false
+        }));
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Falha ao criar modelo';
+      set({ error: msg, isSaving: false });
+      throw err;
+    }
+  },
+
+  criarVersao: async (nome: string, modeloId: number, motorizacao?: string, combustivel?: string) => {
+    try {
+      const res = await fetch(`${API_BASE}/veiculos/versoes/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nome_versao: nome, modelo: modeloId, motorizacao, combustivel, ativo: true })
+      });
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(JSON.stringify(errData));
+      }
+      const novaVersao = await res.json();
+      set((state) => ({
+        listaVersoesFiltradas: [...state.listaVersoesFiltradas, novaVersao],
+        listaCatalogo: [...state.listaCatalogo, novaVersao]
+      }));
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Falha ao criar versão';
+      set({ error: msg });
+      throw err;
+    }
+  },
+
+  atualizarStatusModelo: async (id: number, ativo: boolean) => {
+    try {
+      const res = await fetch(`${API_BASE}/veiculos/modelos/${id}/`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ativo })
+      });
+      if (!res.ok) throw new Error('Falha ao atualizar modelo');
+      set((state) => ({
+        listaModelosFiltrados: state.listaModelosFiltrados.map(m => m.id === id ? { ...m, ativo } : m)
+      }));
+    } catch (err: any) {
+      console.error(err);
+    }
+  },
+
+  atualizarStatusVersao: async (id: number, ativo: boolean) => {
+    try {
+      const res = await fetch(`${API_BASE}/veiculos/versoes/${id}/`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ativo })
+      });
+      if (!res.ok) throw new Error('Falha ao atualizar versão');
+      set((state) => ({
+        listaVersoesFiltradas: state.listaVersoesFiltradas.map(v => v.id === id ? { ...v, ativo } : v),
+        listaCatalogo: state.listaCatalogo.map(v => v.id === id ? { ...v, ativo } : v)
+      }));
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Falha ao atualizar versão';
+      set({ error: msg });
+      throw err;
+    }
+  },
+
+  atualizarVersao: async (id: number, dados: Partial<Versao>) => {
+    set({ isSaving: true, error: null });
+    try {
+      const res = await fetch(`${API_BASE}/veiculos/versoes/${id}/`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(dados)
+      });
+      if (!res.ok) throw new Error('Falha ao atualizar versão');
+      const updated = await res.json();
+      set((state) => ({
+        listaCatalogo: state.listaCatalogo.map(v => v.id === id ? updated : v),
+        isSaving: false
+      }));
+    } catch (err: any) {
+      set({ error: err.message, isSaving: false });
+      throw err;
+    }
+  },
+
+  excluirVersao: async (id: number) => {
+    set({ isLoading: true, error: null });
+    try {
+      const res = await fetch(`${API_BASE}/veiculos/versoes/${id}/`, {
+        method: 'DELETE'
+      });
+      if (!res.ok) throw new Error('Falha ao excluir versão');
+      set((state) => ({
+        listaCatalogo: state.listaCatalogo.filter(v => v.id !== id),
+        isLoading: false
+      }));
+    } catch (err: any) {
+      set({ error: err.message, isLoading: false });
+      throw err;
+    }
+  },
+
   carregarClientes: async () => {
     try {
-      const res = await fetch(`${API_BASE}/core/clientes/`);
-      if (!res.ok) throw new Error('Falha ao carregar clientes');
-      const data = await res.json();
-      set({ listaClientes: data });
+      const clientes = await fetchAllPages(`${API_BASE}/core/clientes/`);
+      set({ listaClientes: clientes });
     } catch (err: any) {
       console.error(err);
     }
@@ -128,10 +418,8 @@ export const useVehicleStore = create<VehicleStoreState>((set, get) => ({
     }));
 
     try {
-      const res = await fetch(`${API_BASE}/veiculos/modelos/?marca=${marcaId}`);
-      if (!res.ok) throw new Error('Falha ao buscar modelos');
-      const data = await res.json();
-      set({ listaModelosFiltrados: data, isLoading: false });
+      const modelos = await fetchAllPages(`${API_BASE}/veiculos/modelos/?marca=${marcaId}`);
+      set({ listaModelosFiltrados: modelos, isLoading: false });
     } catch (err: any) {
       set({ error: err.message, isLoading: false });
     }
@@ -146,10 +434,8 @@ export const useVehicleStore = create<VehicleStoreState>((set, get) => ({
     }));
 
     try {
-      const res = await fetch(`${API_BASE}/veiculos/versoes/?modelo=${modeloId}`);
-      if (!res.ok) throw new Error('Falha ao buscar versões');
-      const data = await res.json();
-      set({ listaVersoesFiltradas: data, isLoading: false });
+      const versoes = await fetchAllPages(`${API_BASE}/veiculos/versoes/?modelo=${modeloId}`);
+      set({ listaVersoesFiltradas: versoes, isLoading: false });
     } catch (err: any) {
       set({ error: err.message, isLoading: false });
     }
@@ -176,27 +462,40 @@ export const useVehicleStore = create<VehicleStoreState>((set, get) => ({
   },
 
   buscarVeiculoPorPlaca: async (placa: string) => {
-    if (placa.length < 7) return;
+    const placaFormatada = formatarPlaca(placa);
+    const valida = validarPlaca(placa);
+    
+    // Atualiza o valor formatado no estado imediatamente
+    set((state) => ({
+      veiculoAtual: { ...state.veiculoAtual, placa: placaFormatada },
+      error: valida ? null : 'Placa em formato inválido. Use AAA-9999 (tradicional) ou AAA0A00 (Mercosul).'
+    }));
+
+    if (!valida) return;
     
     set({ isLoading: true });
     try {
-      const res = await fetch(`${API_BASE}/veiculos/ativos/?placa=${placa}`);
+      const url = `${API_BASE}/veiculos/ativos/?placa=${placaFormatada}`;
+      const res = await fetch(url);
       const data = await res.json();
+      const results = Array.isArray(data) ? data : (data.results || []);
       
-      if (data && data.length > 0) {
-        const veiculoEncontrado = data[0];
+      if (results.length > 0) {
+        const veiculoEncontrado = results[0];
         
         // Se achou, temos que carregar os modelos da marca e as versões do modelo
         if (veiculoEncontrado.marca_id) {
-            const modelosRes = await fetch(`${API_BASE}/veiculos/modelos/?marca=${veiculoEncontrado.marca_id}`);
-            const modelosData = await modelosRes.json();
-            set({ listaModelosFiltrados: modelosData });
+          try {
+            const modelos = await fetchAllPages(`${API_BASE}/veiculos/modelos/?marca=${veiculoEncontrado.marca_id}`);
+            set({ listaModelosFiltrados: modelos });
+          } catch (e) { console.error(e) }
         }
         
         if (veiculoEncontrado.modelo_id) {
-            const versoesRes = await fetch(`${API_BASE}/veiculos/versoes/?modelo=${veiculoEncontrado.modelo_id}`);
-            const versoesData = await versoesRes.json();
-            set({ listaVersoesFiltradas: versoesData });
+          try {
+            const versoes = await fetchAllPages(`${API_BASE}/veiculos/versoes/?modelo=${veiculoEncontrado.modelo_id}`);
+            set({ listaVersoesFiltradas: versoes });
+          } catch (e) { console.error(e) }
         }
         
         set({ 
@@ -208,7 +507,17 @@ export const useVehicleStore = create<VehicleStoreState>((set, get) => ({
             isLoading: false 
         });
       } else {
-        set({ isLoading: false }); // Não achou, segue pra cadastro novo
+        // Se NÃO achou a placa no banco, mantemos a placa e o cliente atual digitados, mas limpamos o resto do formulário
+        set((state) => ({
+          veiculoAtual: {
+            ...defaultVeiculo,
+            placa: placaFormatada,
+            cliente: state.veiculoAtual.cliente
+          },
+          listaModelosFiltrados: [],
+          listaVersoesFiltradas: [],
+          isLoading: false
+        }));
       }
     } catch (err: any) {
       set({ isLoading: false });
@@ -225,13 +534,19 @@ export const useVehicleStore = create<VehicleStoreState>((set, get) => ({
         throw new Error('Preencha os campos obrigatórios (Placa, Chassi, Cliente e Versão).');
       }
 
+      const placaFormatada = formatarPlaca(veiculoAtual.placa);
+      const valida = validarPlaca(veiculoAtual.placa);
+      if (!valida) {
+        throw new Error('Placa em formato inválido. Use AAA-9999 (tradicional) ou AAA0A00 (Mercosul).');
+      }
+
       const method = veiculoAtual.id ? 'PUT' : 'POST';
       const url = veiculoAtual.id 
         ? `${API_BASE}/veiculos/ativos/${veiculoAtual.id}/` 
         : `${API_BASE}/veiculos/ativos/`;
 
       const payload = {
-        placa: veiculoAtual.placa,
+        placa: placaFormatada,
         chassi: veiculoAtual.chassi,
         cliente: veiculoAtual.cliente,
         versao: veiculoAtual.versao,

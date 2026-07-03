@@ -2,12 +2,15 @@ import { useNavigate } from 'react-router-dom';
 import DefaultLayout from '../../layouts/DefaultLayout';
 import { useUISettingsStore, ACCENT_MAP } from '../../store/useUISettingsStore';
 import type { ThemeMode, AccentColor, SidebarStyle, CardStyle } from '../../store/useUISettingsStore';
+import PageHeader from '../../components/shared/PageHeader';
+
+import Card from '../../components/shared/Card';
 
 const Section = ({ title, children }: { title: string; children: React.ReactNode }) => (
-  <div className="bg-surface-900 border border-surface-700 rounded-xl p-6 mb-4">
+  <Card className="mb-4" padding="md">
     <h3 className="text-sm font-semibold text-surface-100 uppercase tracking-wider mb-4">{title}</h3>
     {children}
-  </div>
+  </Card>
 );
 
 const OptionRow = ({ label, desc, children }: { label: string; desc?: string; children: React.ReactNode }) => (
@@ -46,11 +49,11 @@ export default function SettingsPage() {
 
   return (
     <DefaultLayout>
-      <div className="p-6 max-w-3xl mx-auto">
-        <header className="mb-8">
-          <h1 className="text-2xl font-bold text-surface-50">⚙️ Configurações do Sistema</h1>
-          <p className="text-sm text-surface-500 mt-1">Personalize a aparência e os parâmetros da oficina</p>
-        </header>
+      <div className="max-w-3xl mx-auto flex flex-col h-full">
+        <PageHeader 
+          title="⚙️ Configurações do Sistema" 
+          subtitle="Personalize a aparência e os parâmetros da oficina" 
+        />
 
         <Section title="Aparência">
           <OptionRow label="Tema" desc="Modo de cores da interface">
@@ -61,17 +64,27 @@ export default function SettingsPage() {
             </div>
           </OptionRow>
 
-          <OptionRow label="Cor de destaque" desc="Cor principal dos indicadores e gráficos">
-            <div className="flex gap-2">
+          <OptionRow label="Paleta de destaque" desc="Combinações de cores para indicadores e gráficos">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 w-full sm:w-auto">
               {(Object.keys(ACCENT_MAP) as AccentColor[]).map((c) => (
                 <button
                   key={c}
                   onClick={() => settings.update({ accent: c })}
-                  className={`w-7 h-7 rounded-full border-2 transition-all ${
-                    settings.accent === c ? 'border-white scale-110' : 'border-transparent hover:scale-105'
+                  className={`flex flex-col items-center gap-2 p-2 rounded-xl transition-all border ${
+                    settings.accent === c 
+                      ? 'bg-surface-800 border-primary-500 shadow-lg shadow-primary-500/10' 
+                      : 'bg-surface-900 border-surface-800 hover:border-surface-700'
                   }`}
-                  style={{ backgroundColor: ACCENT_MAP[c].primary }}
-                />
+                >
+                  <div className="flex -space-x-3">
+                    <div className="w-8 h-8 rounded-full border-2 border-surface-900 shadow-sm" style={{ backgroundColor: ACCENT_MAP[c]?.primary }} />
+                    <div className="w-8 h-8 rounded-full border-2 border-surface-900 shadow-sm" style={{ backgroundColor: ACCENT_MAP[c]?.secondary }} />
+                    <div className="w-8 h-8 rounded-full border-2 border-surface-900 shadow-sm" style={{ backgroundColor: ACCENT_MAP[c]?.box }} />
+                  </div>
+                  <span className={`text-[9px] font-bold uppercase tracking-wider ${settings.accent === c ? 'text-primary-400' : 'text-surface-500'}`}>
+                    {ACCENT_MAP[c]?.name}
+                  </span>
+                </button>
               ))}
             </div>
           </OptionRow>
@@ -140,27 +153,22 @@ export default function SettingsPage() {
         </Section>
 
         {/* Preview Card */}
-        <div className="bg-surface-900 border border-surface-700 rounded-xl p-6 mb-4">
+        <Card className="mb-4" padding="md">
           <h3 className="text-sm font-semibold text-surface-100 uppercase tracking-wider mb-4">Pré-visualização</h3>
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             {[
               { label: 'KPI Exemplo', value: '45.320', trend: '+8%' },
               { label: 'Eficiência', value: '92%', trend: null },
               { label: 'Pedidos', value: '1.230', trend: '+15%' },
             ].map((c) => (
-              <div
-                key={c.label}
-                className={`p-4 border transition-all ${
-                  settings.cardStyle === 'sharp' ? 'rounded-none' : settings.cardStyle === 'glass' ? 'rounded-2xl backdrop-blur-xl bg-white/5' : 'rounded-xl'
-                } ${settings.cardStyle !== 'glass' ? 'bg-surface-800' : ''} border-surface-700`}
-              >
+              <Card key={c.label} padding="sm" hover={true}>
                 <p className="text-xs text-surface-500">{c.label}</p>
-                <p className="text-xl font-bold mt-1" style={{ color: ACCENT_MAP[settings.accent].primary }}>{c.value}</p>
+                <p className="text-xl font-bold mt-1" style={{ color: ACCENT_MAP[settings.accent]?.primary || '#6366f1' }}>{c.value}</p>
                 {c.trend && <p className="text-[11px] text-accent-400 mt-0.5">{c.trend} vs semana anterior</p>}
-              </div>
+              </Card>
             ))}
           </div>
-        </div>
+        </Card>
 
         {/* Reset */}
         <div className="flex justify-end">

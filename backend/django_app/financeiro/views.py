@@ -5,7 +5,7 @@ from django.db import transaction
 from decimal import Decimal
 
 from .models import Titulo, Transacao, Renegociacao, PlanoContas, ContaBancaria, StatusTitulo
-from .serializers import TituloSerializer, TransacaoSerializer, ContaBancariaSerializer
+from .serializers import TituloSerializer, TransacaoSerializer, ContaBancariaSerializer, PlanoContasSerializer
 
 class ContaBancariaViewSet(viewsets.ModelViewSet):
     queryset = ContaBancaria.objects.all()
@@ -59,3 +59,9 @@ class TituloViewSet(viewsets.ModelViewSet):
 class TransacaoViewSet(viewsets.ModelViewSet):
     queryset = Transacao.objects.all()
     serializer_class = TransacaoSerializer
+
+class PlanoContasViewSet(viewsets.ModelViewSet):
+    queryset = PlanoContas.objects.all()
+    serializer_class = PlanoContasSerializer
+    ordering_fields = ['codigo']
+    search_fields = ['codigo', 'descricao']

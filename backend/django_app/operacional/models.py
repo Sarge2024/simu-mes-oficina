@@ -163,7 +163,7 @@ class OrcamentoItem(models.Model):
     )
     is_terceiro = models.BooleanField("É Serviço Terceirizado?", default=False)
     fornecedor = models.ForeignKey(
-        "core.Fornecedor",
+        "core.Cliente",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,

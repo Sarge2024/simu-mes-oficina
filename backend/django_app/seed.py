@@ -91,6 +91,26 @@ componentes_map = {
 
 print("Inserindo Componentes...")
 for c_id, (cod, tipo, desc, med) in componentes_map.items():
+    # Preços e Custos Estimados
+    price = 20.00
+    cost = 10.00
+    low_desc = desc.lower()
+    
+    if 'haste de válvula' in low_desc:
+        price, cost = 14.50, 8.20
+    elif 'eixo comando' in low_desc:
+        price, cost = 38.00, 22.00
+    elif 'virabrequim dianteiro' in low_desc:
+        price, cost = 52.00, 31.00
+    elif 'virabrequim traseiro' in low_desc:
+        price, cost = 95.00, 58.00
+    elif 'virabrequim diant/tras' in low_desc:
+        price, cost = 65.00, 38.00
+    elif 'tampão' in low_desc:
+        price, cost = 12.00, 4.50
+    elif 'retentor' in low_desc:
+        price, cost = 30.00, 15.00
+
     Componente.objects.update_or_create(
         codigo_interno=cod, 
         defaults={
@@ -98,10 +118,10 @@ for c_id, (cod, tipo, desc, med) in componentes_map.items():
             'descricao_generica': desc,
             'medidas_tecnicas': med,
             'unidade': 'UN',
-            'custo_medio_ponderado': 0.00,
-            'preco_venda': 0.00,
-            'ponto_pedido': 0,
-            'estoque_atual': 0,
+            'custo_medio_ponderado': cost,
+            'preco_venda': price,
+            'ponto_pedido': 5,
+            'estoque_atual': 10,
             'flag_jit': False,
             'ativo': True
         }

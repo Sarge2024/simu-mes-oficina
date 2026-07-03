@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthStore, getDefaultRoute } from './store/useAuthStore';
 import ProtectedRoute from './components/ProtectedRoute';
 import LoginPage from './pages/auth/LoginPage';
+import HomePage from './pages/HomePage';
 import AdminDashboardPage from './pages/admin/AdminDashboardPage';
 import EmpresaMasterPage from './pages/admin/EmpresaMasterPage';
 import VeiculoMasterPage from './pages/admin/VeiculoMasterPage';
@@ -9,14 +10,19 @@ import ClienteMasterPage from './pages/admin/ClienteMasterPage';
 import ComponenteMasterPage from './pages/admin/ComponenteMasterPage';
 import ReferenciaFabricantePage from './pages/admin/ReferenciaFabricantePage';
 import ServicoMasterPage from './pages/admin/ServicoMasterPage';
+import RevisionControlPage from './pages/admin/RevisionControlPage';
 import FinanceiroDashboardPage from './pages/financeiro/FinanceiroDashboardPage';
+import PlanoContasPage from './pages/financeiro/PlanoContasPage';
 import SupervisorDashboardPage from './pages/supervisor/SupervisorDashboardPage';
 import OficinaPage from './pages/oficina/OficinaPage';
+import FechamentoOSPage from './pages/oficina/FechamentoOSPage';
 import ProcessSimulatorPage from './pages/process_simulator/ProcessSimulatorPage';
 import AgentModelerPage from './pages/agent_modeler/AgentModelerPage';
 import SettingsPage from './pages/settings/SettingsPage';
 import ExpedientePage from './pages/settings/ExpedientePage';
 import ConfiguracaoOficinaPage from './pages/settings/ConfiguracaoOficinaPage';
+import MarcaSelectorPage from './pages/settings/MarcaSelectorPage';
+import VeiculoCatalogoPage from './pages/admin/VeiculoCatalogoPage';
 
 function UnauthorizedPage() {
   return (
@@ -51,6 +57,9 @@ function App() {
 
         {/* Root redirect */}
         <Route path="/" element={<RootRedirect />} />
+        
+        {/* Home / Launchpad */}
+        <Route path="/home" element={<ProtectedRoute allowedRoles={['COLABORADOR']}><HomePage /></ProtectedRoute>} />
 
         {/* Admin Routes */}
         <Route element={<ProtectedRoute allowedRoles={['ADMIN']} />}>
@@ -61,16 +70,24 @@ function App() {
           <Route path="/admin/componentes" element={<ComponenteMasterPage />} />
           <Route path="/admin/componentes/:id/referencias" element={<ReferenciaFabricantePage />} />
           <Route path="/admin/servicos" element={<ServicoMasterPage />} />
+          <Route path="/admin/revisoes" element={<RevisionControlPage />} />
+          <Route path="/admin/catalogo" element={<VeiculoCatalogoPage />} />
         </Route>
 
         {/* Financeiro */}
-        <Route path="/financeiro" element={<ProtectedRoute allowedRoles={['FINANCEIRO']}><FinanceiroDashboardPage /></ProtectedRoute>} />
+        <Route element={<ProtectedRoute allowedRoles={['FINANCEIRO', 'ADMIN']} />}>
+          <Route path="/financeiro" element={<FinanceiroDashboardPage />} />
+          <Route path="/financeiro/plano-contas" element={<PlanoContasPage />} />
+        </Route>
 
         {/* Supervisor */}
         <Route path="/supervisor" element={<ProtectedRoute allowedRoles={['SUPERVISOR']}><SupervisorDashboardPage /></ProtectedRoute>} />
 
         {/* Colaborador (all roles) */}
-        <Route path="/oficina" element={<ProtectedRoute allowedRoles={['COLABORADOR']}><OficinaPage /></ProtectedRoute>} />
+        <Route element={<ProtectedRoute allowedRoles={['COLABORADOR']} />}>
+          <Route path="/oficina" element={<OficinaPage />} />
+          <Route path="/oficina/fechamento/:id" element={<FechamentoOSPage />} />
+        </Route>
 
         {/* Tools (Admin only) */}
         <Route path="/process-simulator" element={<ProtectedRoute allowedRoles={['ADMIN']}><ProcessSimulatorPage /></ProtectedRoute>} />
@@ -79,6 +96,7 @@ function App() {
         {/* Settings */}
         <Route element={<ProtectedRoute allowedRoles={['COLABORADOR']} />}>
           <Route path="/settings" element={<SettingsPage />} />
+          <Route path="/settings/marcas" element={<MarcaSelectorPage />} />
         </Route>
         
         <Route element={<ProtectedRoute allowedRoles={['ADMIN']} />}>

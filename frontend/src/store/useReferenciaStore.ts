@@ -12,6 +12,7 @@ export interface Referencia {
 interface Marca {
   id: number;
   nome_marca: string;
+  ativo?: boolean;
 }
 
 interface ReferenciaStore {
@@ -39,11 +40,10 @@ export const useReferenciaStore = create<ReferenciaStore>((set) => ({
   carregarReferencias: async (componenteId: number) => {
     set({ isLoading: true, error: null });
     try {
-      // Usamos o endpoint de referências e filtramos via JS (ou query param se suportado)
-      const res = await fetch(`${API_BASE}/catalogo/referencias/`);
+      const res = await fetch(`${API_BASE}/catalogo/referencias/?componente=${componenteId}`);
       if (!res.ok) throw new Error('Falha ao carregar referências');
-      const data: Referencia[] = await res.json();
-      const filtradas = data.filter(r => r.componente === componenteId);
+      const data = await res.json();
+      const filtradas = Array.isArray(data) ? data : (data.results || []);
       set({ referencias: filtradas, isLoading: false });
     } catch (err: any) {
       set({ error: err.message, isLoading: false });
@@ -52,12 +52,25 @@ export const useReferenciaStore = create<ReferenciaStore>((set) => ({
 
   carregarMarcas: async () => {
     try {
-      const res = await fetch(`${API_BASE}/veiculos/marcas/`);
-      if (!res.ok) throw new Error('Falha ao carregar marcas');
-      const data = await res.json();
-      set({ marcas: data });
+      let todasAsMarcas: Marca[] = [];
+      let url: string | null = `${API_BASE}/veiculos/marcas/`;
+      
+      while (url) {
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`Falha ao carregar marcas: ${res.status}`);
+        const data = await res.json();
+        
+        if (Array.isArray(data)) {
+          todasAsMarcas = data;
+          break;
+        } else {
+          todasAsMarcas = [...todasAsMarcas, ...(data.results || [])];
+          url = data.next ? `/api/django${data.next.replace(/^https?:\/\/[^\/]+/, '')}` : null;
+        }
+      }
+      set({ marcas: todasAsMarcas });
     } catch (err: any) {
-      console.error(err);
+      console.error('Erro em carregarMarcas:', err);
     }
   },
 
@@ -74,9 +87,9 @@ export const useReferenciaStore = create<ReferenciaStore>((set) => ({
         throw new Error(JSON.stringify(errData));
       }
       // Recarrega as referências do componente
-      const updatedRes = await fetch(`${API_BASE}/catalogo/referencias/`);
-      const allRefs: Referencia[] = await updatedRes.json();
-      const updatedRefs = allRefs.filter(r => r.componente === referencia.componente);
+      const updatedRes = await fetch(`${API_BASE}/catalogo/referencias/?componente=${referencia.componente}`);
+      const data = await updatedRes.json();
+      const updatedRefs = Array.isArray(data) ? data : (data.results || []);
       set({ referencias: updatedRefs, isSaving: false });
     } catch (err: any) {
       set({ error: err.message, isSaving: false });

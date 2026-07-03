@@ -15,6 +15,7 @@ class PlanoContas(models.Model):
     codigo = models.CharField("Código", max_length=20, unique=True, help_text="Ex: 2.1.1.1.0")
     descricao = models.CharField("Descrição", max_length=255)
     tipo_natureza = models.CharField(max_length=20, choices=TipoNatureza.choices)
+    nivel = models.PositiveSmallIntegerField("Nível", default=1)
     ativo = models.BooleanField(default=True)
     criado_em = models.DateTimeField(auto_now_add=True)
 

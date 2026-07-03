@@ -1,12 +1,14 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import DefaultLayout from '../../layouts/DefaultLayout';
 import { useAuthStore } from '../../store/useAuthStore';
 import { useUISettingsStore, ACCENT_MAP } from '../../store/useUISettingsStore';
+import PageHeader from '../../components/shared/PageHeader';
+import Card from '../../components/shared/Card';
 
 export default function AdminDashboardPage() {
   const user = useAuthStore((s) => s.user);
-  const { accent, cardStyle, showWelcome } = useUISettingsStore();
-  const accentColor = ACCENT_MAP[accent].primary;
+  const { accent } = useUISettingsStore();
+  const accentColor = ACCENT_MAP[accent]?.primary || '#6366f1';
 
   const [limiteVariacao, setLimiteVariacao] = useState('15');
   const [simCustoFixo, setSimCustoFixo] = useState('45000');
@@ -16,6 +18,29 @@ export default function AdminDashboardPage() {
   const [simCapex, setSimCapex] = useState('0');
   const [simNovoCusto, setSimNovoCusto] = useState('0');
   const [peResult, setPeResult] = useState<{ PEO: number; PEE: number; PEF: number } | null>(null);
+  const [isLogsPopupOpen, setIsLogsPopupOpen] = useState(false);
+  const [logs, setLogs] = useState<any[]>([]);
+
+  const carregarLogs = async () => {
+    try {
+      const res = await fetch('/api/django/api/core/logs-auditoria/?page_size=50');
+      const data = await res.json();
+      setLogs(Array.isArray(data.results) ? data.results : (Array.isArray(data) ? data : []));
+    } catch (err) {
+      console.error("Erro ao carregar logs:", err);
+    }
+  };
+
+  useEffect(() => {
+    carregarLogs();
+    const interval = setInterval(carregarLogs, 30000); // Atualiza a cada 30s
+    return () => clearInterval(interval);
+  }, []);
+
+  const formatTime = (isoString: string) => {
+    const date = new Date(isoString);
+    return date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  };
 
   const calcularPE = async () => {
     try {
@@ -39,20 +64,17 @@ export default function AdminDashboardPage() {
   const formatBRL = (v: number) =>
     v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
-  const cardClass = `border border-surface-700 transition-all hover:border-opacity-60 ${
-    cardStyle === 'sharp' ? 'rounded-none' : cardStyle === 'glass' ? 'rounded-2xl backdrop-blur-xl bg-white/[0.03]' : 'rounded-xl bg-surface-900'
-  } ${cardStyle !== 'glass' ? 'bg-surface-900' : ''}`;
-
   return (
-    <DefaultLayout>
-      <div className="p-6">
+    <>
+      <DefaultLayout>
+      <div className="flex flex-col h-full">
         {/* Header */}
-        <header className="flex items-center justify-between mb-6">
-          <div>
-            {showWelcome && <p className="text-sm text-surface-500">Bem-vindo de volta,</p>}
-            <h1 className="text-2xl font-bold text-surface-50">{user?.nome ?? 'Administrador'}</h1>
-            <p className="text-sm text-surface-500 mt-1">Visão global, Cockpit da Sociedade e Simulador</p>
-          </div>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+          <PageHeader 
+            title={user?.nome ?? 'Administrador'} 
+            subtitle="Visão global, Cockpit da Sociedade e Simulador"
+            showBackButton={false}
+          />
           <div className="flex items-center gap-3">
             <div className="relative">
               <input placeholder="Pesquisar logs..." className="w-64 pl-9 pr-4 py-2.5 rounded-xl bg-surface-800 border border-surface-700 text-sm text-surface-200 placeholder:text-surface-600 focus:outline-none focus:ring-2 focus:ring-primary-500/30" />
@@ -65,7 +87,7 @@ export default function AdminDashboardPage() {
               <span className="text-lg">🔔</span>
             </button>
           </div>
-        </header>
+        </div>
 
         {/* KPIs de Governança */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
@@ -75,18 +97,18 @@ export default function AdminDashboardPage() {
             { label: 'OS Retidas', value: '2', color: '#ef4444', sub: 'Aguardando aprovação' },
             { label: 'Eventos de Auditoria', value: '47', color: '#6366f1', sub: 'Últimos 30 dias' },
           ].map((c) => (
-            <div key={c.label} className={`${cardClass} p-5`}>
+            <Card key={c.label} padding="sm">
               <p className="text-xs text-surface-500 uppercase tracking-wider">{c.label}</p>
               <p className="text-2xl font-bold mt-1" style={{ color: c.color }}>{c.value}</p>
               <p className="text-[11px] text-surface-600 mt-1">{c.sub}</p>
-            </div>
+            </Card>
           ))}
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
           {/* Configurações Globais & Auditoria */}
           <div className="flex flex-col gap-6">
-            <div className={`${cardClass} p-6`}>
+            <Card padding="md">
               <h2 className="text-lg font-semibold text-surface-100 mb-4">⚙️ Parâmetros Globais</h2>
               <div>
                 <label className="block text-sm text-surface-300 mb-1">LIMITE_VARIACAO_OS_PCT (%)</label>
@@ -103,33 +125,37 @@ export default function AdminDashboardPage() {
                 </div>
                 <p className="text-[11px] text-surface-600 mt-1">OS com variação acima deste % será retida para aprovação gerencial.</p>
               </div>
-            </div>
+            </Card>
 
-            <div className={`${cardClass} p-6 flex-1`}>
+            <Card padding="lg" className="flex-1">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-lg font-semibold text-surface-100">🛡️ Logs de Auditoria</h2>
-                <button className="text-xs text-surface-400 hover:text-surface-200">Ver todos</button>
+                <button 
+                  onClick={() => setIsLogsPopupOpen(true)}
+                  className="text-xs text-surface-400 hover:text-surface-200"
+                >
+                  Ver todos
+                </button>
               </div>
               <div className="space-y-3">
-                {[
-                  { time: '10:42', user: 'Pedro Supervisor', action: 'Desbloqueio Gerencial OS #104' },
-                  { time: '09:15', user: 'Ana Financeiro', action: 'Renegociação Título #882' },
-                  { time: '08:30', user: 'Sistema', action: 'Fechamento DRE consolidado' },
-                ].map((log, i) => (
+                {logs.slice(0, 5).map((log, i) => (
                   <div key={i} className="flex items-start gap-3 py-2 border-b border-surface-800 last:border-0">
-                    <span className="text-xs font-mono text-surface-500 mt-0.5">{log.time}</span>
+                    <span className="text-xs font-mono text-surface-500 mt-0.5">{formatTime(log.timestamp)}</span>
                     <div>
-                      <p className="text-sm text-surface-200">{log.action}</p>
-                      <p className="text-xs text-surface-600">{log.user}</p>
+                      <p className="text-sm text-surface-200">{log.acao} {log.tabela} #{log.registro_id}</p>
+                      <p className="text-xs text-surface-600">{log.usuario}</p>
                     </div>
                   </div>
                 ))}
+                {logs.length === 0 && (
+                  <p className="text-xs text-surface-500 text-center py-4 italic">Nenhuma atividade registrada.</p>
+                )}
               </div>
-            </div>
+            </Card>
           </div>
 
           {/* Simulador What-If */}
-          <div className={`${cardClass} p-6`}>
+          <Card padding="md">
             <h2 className="text-lg font-semibold text-surface-100 mb-4">📊 Simulador de Cenários de Investimento (RF-GOV-05)</h2>
             <div className="grid grid-cols-2 gap-4 mb-6">
               {[
@@ -147,7 +173,7 @@ export default function AdminDashboardPage() {
                     value={f.val}
                     onChange={(e) => f.set(e.target.value)}
                     className="w-full px-3 py-2 rounded-lg bg-surface-800 border border-surface-700 text-surface-100 text-sm focus:outline-none"
-                    style={{ focusRing: accentColor }}
+                    style={{ focusRing: accentColor } as React.CSSProperties}
                   />
                 </div>
               ))}
@@ -155,7 +181,7 @@ export default function AdminDashboardPage() {
             <button
               onClick={calcularPE}
               className="w-full px-4 py-3 rounded-lg text-white text-sm font-semibold transition-all hover:opacity-90 shadow-lg"
-              style={{ backgroundColor: accentColor, shadowColor: `${accentColor}40` }}
+              style={{ backgroundColor: accentColor, boxShadow: `0 10px 15px -3px ${accentColor}40` }}
             >
               Projetar Impacto no Ponto de Equilíbrio
             </button>
@@ -173,11 +199,11 @@ export default function AdminDashboardPage() {
                 ))}
               </div>
             )}
-          </div>
+          </Card>
         </div>
 
         {/* Cockpit da Sociedade */}
-        <div className={`${cardClass} p-6`}>
+        <Card padding="md">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold text-surface-100">👥 Cockpit da Sociedade — Isolamento Patrimonial (Conta 2.6.0.0.0)</h2>
             <span className="px-3 py-1 rounded-full text-xs font-medium bg-surface-800 text-surface-300 border border-surface-700">RF-GOV-03</span>
@@ -217,8 +243,70 @@ export default function AdminDashboardPage() {
               </tbody>
             </table>
           </div>
-        </div>
+        </Card>
       </div>
     </DefaultLayout>
+
+    {/* Popup Logs de Auditoria */}
+    {isLogsPopupOpen && (
+      <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+        <div className="w-full max-w-2xl bg-surface-900 border border-surface-800 rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+          <div className="flex items-center justify-between p-6 border-b border-surface-800">
+            <div>
+              <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                <span className="text-primary-500">🛡️</span> Logs de Auditoria Completos
+              </h3>
+              <p className="text-xs text-surface-400 mt-1">Histórico detalhado de ações críticas no sistema</p>
+            </div>
+            <button 
+              onClick={() => setIsLogsPopupOpen(false)}
+              className="w-10 h-10 flex items-center justify-center rounded-full bg-surface-800 text-surface-400 hover:text-white hover:bg-surface-700 transition-all"
+            >
+              ✕
+            </button>
+          </div>
+          
+          <div className="p-6 max-h-[60vh] overflow-y-auto custom-scrollbar">
+            <div className="space-y-4">
+              {logs.map((log, i) => (
+                <div key={i} className="flex items-start gap-4 p-4 rounded-xl bg-surface-950/50 border border-surface-800/50 hover:border-primary-500/30 transition-all group">
+                  <div className="px-2 py-1 rounded bg-surface-800 text-[10px] font-mono text-surface-400 group-hover:text-primary-400 transition-colors">
+                    {formatTime(log.timestamp)}
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-surface-100 group-hover:text-white transition-colors">
+                      {log.acao} {log.tabela} (ID: {log.registro_id})
+                    </p>
+                    <div className="flex items-center gap-2 mt-1">
+                      <div className="w-1.5 h-1.5 rounded-full bg-primary-500/50"></div>
+                      <p className="text-xs text-surface-500">{log.usuario}</p>
+                    </div>
+                    {/* Detalhes expansíveis ou mini-view se necessário */}
+                    <div className="mt-2 text-[10px] text-surface-600 font-mono hidden group-hover:block animate-in slide-in-from-top-1">
+                      {JSON.stringify(log.detalhes).slice(0, 100)}...
+                    </div>
+                  </div>
+                </div>
+              ))}
+              {logs.length === 0 && (
+                <div className="py-20 text-center">
+                  <p className="text-surface-500 italic">O sistema de auditoria está ativo, mas ainda não há logs processados.</p>
+                </div>
+              )}
+            </div>
+          </div>
+          
+          <div className="p-6 bg-surface-950 border-t border-surface-800 flex justify-end">
+            <button 
+              onClick={() => setIsLogsPopupOpen(false)}
+              className="px-6 py-2.5 bg-surface-800 hover:bg-surface-700 text-surface-100 rounded-xl text-xs font-bold uppercase tracking-wider transition-all"
+            >
+              Fechar Visualização
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
+    </>
   );
 }

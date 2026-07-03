@@ -48,7 +48,7 @@ class StatusPedido(models.TextChoices):
     CANCELADO = "cancelado", "Cancelado"
 
 class PedidoCompra(models.Model):
-    fornecedor = models.ForeignKey("core.Fornecedor", on_delete=models.PROTECT, related_name="pedidos_compra")
+    fornecedor = models.ForeignKey("core.Cliente", on_delete=models.PROTECT, related_name="pedidos_compra")
     status = models.CharField(max_length=20, choices=StatusPedido.choices, default=StatusPedido.RASCUNHO)
     data_emissao = models.DateTimeField(auto_now_add=True)
     data_prevista_entrega = models.DateField(null=True, blank=True)
@@ -77,7 +77,7 @@ class ItemRequisicao(models.Model):
     quantidade = models.DecimalField(max_digits=10, decimal_places=2, default=1)
     status_compra = models.CharField(max_length=20, choices=StatusCompra.choices, default=StatusCompra.PENDENTE)
     valor_spot_price = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
-    fornecedor = models.ForeignKey("core.Fornecedor", on_delete=models.SET_NULL, null=True, blank=True, related_name="itens_requisicao")
+    fornecedor = models.ForeignKey("core.Cliente", on_delete=models.SET_NULL, null=True, blank=True, related_name="itens_requisicao")
     pedido_compra = models.ForeignKey(PedidoCompra, on_delete=models.SET_NULL, null=True, blank=True, related_name="itens")
     criado_em = models.DateTimeField(auto_now_add=True)
     atualizado_em = models.DateTimeField(auto_now=True)
@@ -93,7 +93,7 @@ class ItemRequisicao(models.Model):
 
 class EntradaNFe(models.Model):
     chave_acesso_nfe = models.CharField("Chave de Acesso NFe", max_length=44, unique=True, help_text="44 dígitos numéricos")
-    fornecedor = models.ForeignKey("core.Fornecedor", on_delete=models.PROTECT, related_name="entradas_nfe")
+    fornecedor = models.ForeignKey("core.Cliente", on_delete=models.PROTECT, related_name="entradas_nfe")
     data_emissao = models.DateField("Data de Emissão")
     criado_em = models.DateTimeField(auto_now_add=True)
 

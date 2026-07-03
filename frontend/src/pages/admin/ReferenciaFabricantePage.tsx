@@ -3,6 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import DefaultLayout from '../../layouts/DefaultLayout';
 import { useReferenciaStore, type Referencia } from '../../store/useReferenciaStore';
 import { useComponenteStore } from '../../store/useComponenteStore';
+import { useVehicleStore } from '../../store/useVehicleStore';
+import Card from '../../components/shared/Card';
 import { AgGridReact } from 'ag-grid-react';
 import { ModuleRegistry, AllCommunityModule } from 'ag-grid-community';
 import type { ColDef, ICellRendererParams } from 'ag-grid-community';
@@ -14,7 +16,7 @@ export default function ReferenciaFabricantePage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { accent } = useUISettingsStore();
-  const accentColor = ACCENT_MAP[accent].primary;
+  const accentColor = ACCENT_MAP[accent]?.primary || '#6366f1';
 
   const { componenteAtual, selecionarComponente } = useComponenteStore();
   const { 
@@ -29,10 +31,19 @@ export default function ReferenciaFabricantePage() {
     excluirReferencia 
   } = useReferenciaStore();
 
-  const [novaRef, setNovaRef] = useState<Partial<Referencia>>({
+  const {
+    listaModelosFiltrados,
+    listaVersoesFiltradas,
+    selecionarMarca,
+    selecionarModelo
+  } = useVehicleStore();
+
+  const [novaRef, setNovaRef] = useState<Partial<Referencia> & { modelo?: number; versao?: number }>({
     marca: undefined,
     codigo_fabricante: '',
-    material_construcao: ''
+    material_construcao: '',
+    modelo: undefined,
+    versao: undefined
   });
 
   useEffect(() => {
@@ -54,7 +65,24 @@ export default function ReferenciaFabricantePage() {
       material_construcao: novaRef.material_construcao || ''
     });
 
-    setNovaRef({ marca: undefined, codigo_fabricante: '', material_construcao: '' });
+    // Se houver uma versão selecionada, salva a Aplicação do Veículo
+    if (novaRef.versao) {
+      try {
+        await fetch('/api/django/api/catalogo/aplicacoes_veiculos/', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            componente: Number(id),
+            versao: Number(novaRef.versao),
+            observacoes: 'Vinculado junto com a Referência'
+          })
+        });
+      } catch (err) {
+        console.error('Erro ao vincular veículo compatível', err);
+      }
+    }
+
+    setNovaRef({ marca: undefined, codigo_fabricante: '', material_construcao: '', modelo: undefined, versao: undefined });
   };
 
   const ActionButton = (props: ICellRendererParams) => (
@@ -101,59 +129,97 @@ export default function ReferenciaFabricantePage() {
 
         <div className="grid grid-cols-3 gap-8">
           <div className="col-span-1">
-            <form onSubmit={handleAdd} className="bg-surface-900 border border-surface-800 rounded-xl p-6 space-y-4 sticky top-0">
-              <h2 className="text-lg font-semibold text-surface-100 mb-4">Novo Produto (Vínculo)</h2>
-              
-              <div>
-                <label className="block text-sm text-surface-400 mb-1">Marca / Fabricante *</label>
-                <select 
-                  required
-                  value={novaRef.marca || ''}
-                  onChange={(e) => setNovaRef({...novaRef, marca: Number(e.target.value)})}
-                  className="w-full bg-surface-800 border border-surface-700 text-surface-100 rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-primary-500"
+            <Card padding="md" className="border-surface-800 sticky top-0">
+              <form onSubmit={handleAdd} className="space-y-4">
+                <h2 className="text-lg font-semibold text-surface-100 mb-4">Novo Produto (Vínculo)</h2>
+                
+                <div>
+                  <label className="block text-sm text-surface-400 mb-1">Marca / Fabricante *</label>
+                  <select 
+                    required
+                    value={novaRef.marca || ''}
+                    onChange={(e) => {
+                      const mId = Number(e.target.value);
+                      setNovaRef({...novaRef, marca: mId, modelo: undefined, versao: undefined});
+                      if (mId) selecionarMarca(mId);
+                    }}
+                    className="w-full bg-surface-800 border border-surface-700 text-surface-100 rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                  >
+                    <option value="">Selecione...</option>
+                    {marcas.filter(m => m.ativo).map(m => <option key={m.id} value={m.id}>{m.nome_marca}</option>)}
+                  </select>
+                </div>
+
+                {listaModelosFiltrados.length > 0 && (
+                  <div>
+                    <label className="block text-sm text-surface-400 mb-1">Modelo do Veículo (Opcional)</label>
+                    <select 
+                      value={novaRef.modelo || ''}
+                      onChange={(e) => {
+                        const mId = Number(e.target.value);
+                        setNovaRef({...novaRef, modelo: mId, versao: undefined});
+                        if (mId) selecionarModelo(mId);
+                      }}
+                      className="w-full bg-surface-800 border border-surface-700 text-surface-100 rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                    >
+                      <option value="">Nenhum modelo específico</option>
+                      {listaModelosFiltrados.filter(m => m.ativo).map(m => <option key={m.id} value={m.id}>{m.nome_modelo}</option>)}
+                    </select>
+                  </div>
+                )}
+
+                {listaVersoesFiltradas.length > 0 && novaRef.modelo && (
+                  <div>
+                    <label className="block text-sm text-surface-400 mb-1">Versão do Veículo (Opcional)</label>
+                    <select 
+                      value={novaRef.versao || ''}
+                      onChange={(e) => setNovaRef({...novaRef, versao: Number(e.target.value)})}
+                      className="w-full bg-surface-800 border border-surface-700 text-surface-100 rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                    >
+                      <option value="">Nenhuma versão específica</option>
+                      {listaVersoesFiltradas.filter(v => v.ativo).map(v => <option key={v.id} value={v.id}>{v.nome_versao} {v.motorizacao} {v.combustivel}</option>)}
+                    </select>
+                  </div>
+                )}
+
+                <div>
+                  <label className="block text-sm text-surface-400 mb-1">Código do Fabricante *</label>
+                  <input 
+                    required
+                    type="text"
+                    value={novaRef.codigo_fabricante}
+                    onChange={(e) => setNovaRef({...novaRef, codigo_fabricante: e.target.value.toUpperCase()})}
+                    className="w-full bg-surface-800 border border-surface-700 text-surface-100 rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-primary-500 font-mono"
+                    placeholder="Ex: 5.081110"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm text-surface-400 mb-1">Material (Opcional)</label>
+                  <input 
+                    type="text"
+                    value={novaRef.material_construcao}
+                    onChange={(e) => setNovaRef({...novaRef, material_construcao: e.target.value})}
+                    className="w-full bg-surface-800 border border-surface-700 text-surface-100 rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                    placeholder="Ex: NBR, MVQ"
+                  />
+                </div>
+
+                {error && <p className="text-xs text-danger-400 bg-danger-500/10 p-2 rounded">{error}</p>}
+
+                <button 
+                  disabled={isSaving}
+                  className="w-full py-2.5 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-500 transition-colors shadow-lg"
+                  style={{ backgroundColor: accentColor }}
                 >
-                  <option value="">Selecione...</option>
-                  {marcas.map(m => <option key={m.id} value={m.id}>{m.nome_marca}</option>)}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm text-surface-400 mb-1">Código do Fabricante *</label>
-                <input 
-                  required
-                  type="text"
-                  value={novaRef.codigo_fabricante}
-                  onChange={(e) => setNovaRef({...novaRef, codigo_fabricante: e.target.value.toUpperCase()})}
-                  className="w-full bg-surface-800 border border-surface-700 text-surface-100 rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-primary-500 font-mono"
-                  placeholder="Ex: 5.081110"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm text-surface-400 mb-1">Material (Opcional)</label>
-                <input 
-                  type="text"
-                  value={novaRef.material_construcao}
-                  onChange={(e) => setNovaRef({...novaRef, material_construcao: e.target.value})}
-                  className="w-full bg-surface-800 border border-surface-700 text-surface-100 rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-primary-500"
-                  placeholder="Ex: NBR, MVQ"
-                />
-              </div>
-
-              {error && <p className="text-xs text-danger-400 bg-danger-500/10 p-2 rounded">{error}</p>}
-
-              <button 
-                disabled={isSaving}
-                className="w-full py-2.5 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-500 transition-colors shadow-lg"
-                style={{ backgroundColor: accentColor }}
-              >
-                {isSaving ? 'Vinculando...' : '+ Vincular Produto'}
-              </button>
-            </form>
+                  {isSaving ? 'Vinculando...' : '+ Vincular Produto'}
+                </button>
+              </form>
+            </Card>
           </div>
 
           <div className="col-span-2">
-            <div className="bg-surface-900 border border-surface-800 rounded-xl p-6 h-full flex flex-col">
+            <Card padding="md" className="h-full flex flex-col border-surface-800">
               <h2 className="text-lg font-semibold text-surface-100 mb-4">Equivalências Disponíveis</h2>
               <div className="ag-theme-alpine-dark w-full flex-1 min-h-[400px]">
                 <AgGridReact
@@ -164,7 +230,7 @@ export default function ReferenciaFabricantePage() {
                   overlayNoRowsTemplate="Este componente ainda não possui produtos vinculados."
                 />
               </div>
-            </div>
+            </Card>
           </div>
         </div>
       </div>

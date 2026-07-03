@@ -1,6 +1,8 @@
 import { useMemo } from 'react';
 import DefaultLayout from '../../layouts/DefaultLayout';
 import { useExpedienteStore } from '../../store/useExpedienteStore';
+import PageHeader from '../../components/shared/PageHeader';
+import Card from '../../components/shared/Card';
 
 const DAYS_OF_WEEK = [
   { idx: 1, name: 'Segunda-feira' },
@@ -46,15 +48,15 @@ export default function ExpedientePage() {
 
   return (
     <DefaultLayout>
-      <div className="p-6 max-w-6xl mx-auto h-full flex flex-col">
-        <header className="mb-8">
-          <h1 className="text-2xl font-bold text-surface-50">📅 Configuração de Expediente</h1>
-          <p className="text-sm text-surface-500 mt-1">Gerencie os horários da Oficina e os dias inoperantes no calendário</p>
-        </header>
+      <div className="max-w-6xl mx-auto flex flex-col h-full">
+        <PageHeader 
+          title="📅 Configuração de Expediente" 
+          subtitle="Gerencie os horários da Oficina e os dias inoperantes no calendário" 
+        />
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-1 overflow-hidden">
           {/* Quadro Semanal */}
-          <div className="lg:col-span-1 bg-surface-900 border border-surface-700 rounded-xl p-6 flex flex-col h-full overflow-y-auto">
+          <Card padding="md" className="lg:col-span-1 flex flex-col h-full overflow-y-auto">
             <h2 className="text-lg font-semibold text-surface-100 mb-6 flex items-center gap-2">
               <span>⏱️</span> Quadro Semanal
             </h2>
@@ -96,10 +98,10 @@ export default function ExpedientePage() {
                 );
               })}
             </div>
-          </div>
+          </Card>
 
           {/* Calendário Anual */}
-          <div className="lg:col-span-2 bg-surface-900 border border-surface-700 rounded-xl p-6 flex flex-col h-full overflow-hidden">
+          <Card padding="md" className="lg:col-span-2 flex flex-col h-full overflow-hidden">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-lg font-semibold text-surface-100 flex items-center gap-2">
                 <span>🗓️</span> Calendário de Feriados ({currentYear})
@@ -151,7 +153,7 @@ export default function ExpedientePage() {
                 </div>
               ))}
             </div>
-          </div>
+          </Card>
         </div>
       </div>
     </DefaultLayout>

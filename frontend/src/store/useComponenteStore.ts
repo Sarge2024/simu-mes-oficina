@@ -21,6 +21,13 @@ export interface Componente {
     estoque_atual: number;
     preco_venda: number;
   }[];
+  veiculos_compativeis?: {
+    id: number;
+    versao_nome: string;
+    modelo_nome: string;
+    marca_nome: string;
+    observacoes: string;
+  }[];
 }
 
 interface ComponenteStoreState {
@@ -68,7 +75,8 @@ export const useComponenteStore = create<ComponenteStoreState>((set, get) => ({
       const res = await fetch(`${API_BASE}/catalogo/componentes/`);
       if (!res.ok) throw new Error('Falha ao carregar componentes');
       const data = await res.json();
-      set({ listaComponentes: data, isLoading: false });
+      const componentes = Array.isArray(data) ? data : (data.results || []);
+      set({ listaComponentes: componentes, isLoading: false });
     } catch (err: any) {
       set({ error: err.message, isLoading: false });
     }
@@ -81,11 +89,31 @@ export const useComponenteStore = create<ComponenteStoreState>((set, get) => ({
   },
 
   selecionarComponente: async (id: number) => {
-    set({ isLoading: true, error: null });
+    if (!id) return;
+    set({ isLoading: true, error: null, componenteAtual: defaultComponente });
     try {
       const res = await fetch(`${API_BASE}/catalogo/componentes/${id}/`);
       if (!res.ok) throw new Error('Componente não encontrado');
       const data = await res.json();
+
+      // Fetch veículos compatíveis
+      const vRes = await fetch(`${API_BASE}/catalogo/aplicacoes_veiculos/?componente=${id}`);
+      if (vRes.ok) {
+        const vData = await vRes.json();
+        data.veiculos_compativeis = Array.isArray(vData) ? vData : (vData.results || []);
+      } else {
+        data.veiculos_compativeis = [];
+      }
+
+      // Fetch referências (Equivalências Disponíveis) para a Tabela 3
+      const refRes = await fetch(`${API_BASE}/catalogo/referencias/?componente=${id}`);
+      if (refRes.ok) {
+        const refData = await refRes.json();
+        data.similares = Array.isArray(refData) ? refData : (refData.results || []);
+      } else {
+        data.similares = [];
+      }
+
       set({ componenteAtual: data, isLoading: false });
     } catch (err: any) {
       set({ error: err.message, isLoading: false });
@@ -97,9 +125,12 @@ export const useComponenteStore = create<ComponenteStoreState>((set, get) => ({
     set({ isSaving: true, error: null });
 
     try {
-      if (!componenteAtual.codigo_interno || !componenteAtual.descricao_generica) {
-        throw new Error('Preencha os campos obrigatórios (Código e Descrição).');
+      if (!componenteAtual.descricao_generica) {
+        throw new Error('Preencha os campos obrigatórios (Descrição).');
       }
+
+      // Limpa dados auxiliares para não enviar lixo à API
+      const { similares, veiculos_compativeis, ...payload } = componenteAtual;
 
       const method = componenteAtual.id ? 'PUT' : 'POST';
       const url = componenteAtual.id 
@@ -109,12 +140,13 @@ export const useComponenteStore = create<ComponenteStoreState>((set, get) => ({
       const res = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(componenteAtual)
+        body: JSON.stringify(payload)
       });
 
       if (!res.ok) {
         const errData = await res.json();
-        throw new Error(JSON.stringify(errData));
+        console.error('Erro na API:', errData);
+        throw new Error(typeof errData === 'object' ? JSON.stringify(errData) : 'Erro ao salvar');
       }
 
       await carregarComponentes();

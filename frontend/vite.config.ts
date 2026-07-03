@@ -7,15 +7,15 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
   server: {
     host: true,
-    port: 5173,
+    port: 5001,
     proxy: {
       '/api/django': {
-        target: 'http://localhost:8000',
+        target: 'http://127.0.0.1:5012',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api\/django/, ''),
       },
       '/api/fastapi': {
-        target: 'http://localhost:8001',
+        target: 'http://127.0.0.1:5013',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api\/fastapi/, ''),
       },

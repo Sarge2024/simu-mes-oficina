@@ -1,0 +1,6 @@
+#!/bin/bash
+curl -X POST http://127.0.0.1:5012/api/catalogo/servicos/ -H "Content-Type: application/json" -d '{"codigo": "MEC-001", "descricao": "Troca de Óleo e Filtro do Motor", "tempo_padrao": "1.0", "preco_base": "80.00", "especialidade": "Mecânica", "ativo": true}'
+curl -X POST http://127.0.0.1:5012/api/catalogo/servicos/ -H "Content-Type: application/json" -d '{"codigo": "MEC-002", "descricao": "Alinhamento e Balanceamento", "tempo_padrao": "1.5", "preco_base": "120.00", "especialidade": "Mecânica", "ativo": true}'
+curl -X POST http://127.0.0.1:5012/api/catalogo/servicos/ -H "Content-Type: application/json" -d '{"codigo": "ELE-001", "descricao": "Substituição de Bateria 60Ah", "tempo_padrao": "0.5", "preco_base": "50.00", "especialidade": "Elétrica", "ativo": true}'
+curl -X POST http://127.0.0.1:5012/api/catalogo/servicos/ -H "Content-Type: application/json" -d '{"codigo": "ELE-002", "descricao": "Revisão e Troca do Alternador", "tempo_padrao": "2.5", "preco_base": "250.00", "especialidade": "Elétrica", "ativo": true}'
+curl -X POST http://127.0.0.1:5012/api/catalogo/servicos/ -H "Content-Type: application/json" -d '{"codigo": "MEC-003", "descricao": "Troca de Pastilhas de Freio", "tempo_padrao": "1.5", "preco_base": "150.00", "especialidade": "Mecânica", "ativo": true}'

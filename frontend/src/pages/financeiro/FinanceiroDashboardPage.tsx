@@ -3,6 +3,8 @@ import DefaultLayout from '../../layouts/DefaultLayout';
 import { AgGridReact } from 'ag-grid-react';
 import { ModuleRegistry, AllCommunityModule } from 'ag-grid-community';
 import type { ColDef } from 'ag-grid-community';
+import PageHeader from '../../components/shared/PageHeader';
+import Card from '../../components/shared/Card';
 
 import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-alpine.css';
@@ -17,14 +19,14 @@ export default function FinanceiroDashboardPage() {
 
   return (
     <DefaultLayout>
-      <div className="p-6">
-        <header className="mb-8">
-          <h1 className="text-2xl font-bold text-surface-50">💰 Painel Financeiro</h1>
-          <p className="text-sm text-surface-500 mt-1">DRE, Pontos de Equilíbrio, Tesouraria e Matriz Orçamentária</p>
-        </header>
+      <div className="flex flex-col h-full">
+        <PageHeader 
+          title="💰 Painel Financeiro" 
+          subtitle="DRE, Pontos de Equilíbrio, Tesouraria e Matriz Orçamentária" 
+        />
 
         {/* Matriz Quadrimestral de Orçamento */}
-        <div className="bg-surface-900 border border-surface-700 rounded-xl p-6 mb-6">
+        <Card padding="md" className="mb-6">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold text-surface-100">📅 Matriz Quadrimestral de Orçamento (RF-GOV-01)</h2>
             <button className="px-4 py-2 rounded-lg bg-primary-600 text-white text-sm font-medium hover:bg-primary-500 transition-colors">
@@ -52,7 +54,7 @@ export default function FinanceiroDashboardPage() {
             />
           </div>
           <p className="text-[11px] text-surface-500 mt-2">* As metas definidas aqui retroalimentam o Simulador de Cenários e o cálculo do Ponto de Equilíbrio (PEE/PEF).</p>
-        </div>
+        </Card>
 
         {/* PE Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
@@ -61,17 +63,17 @@ export default function FinanceiroDashboardPage() {
             { label: 'PEE — Econômico', value: 162857.14, color: 'text-accent-400', desc: '(CF + Metas) / MC%' },
             { label: 'PEF — Financeiro', value: 154285.71, color: 'text-warning-400', desc: '(CF + Metas - Deprec.) / MC%' },
           ].map((c) => (
-            <div key={c.label} className="bg-surface-900 border border-surface-700 rounded-xl p-5 hover:border-primary-500/30 transition-colors">
+            <Card key={c.label} padding="md" className="hover:border-primary-500/30 transition-colors">
               <p className="text-xs text-surface-500 uppercase tracking-wider">{c.label}</p>
               <p className={`text-2xl font-bold mt-1 ${c.color}`}>{formatBRL(c.value)}</p>
               <p className="text-[11px] text-surface-600 mt-1">{c.desc}</p>
-            </div>
+            </Card>
           ))}
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
           {/* Contas a Pagar/Receber */}
-          <div className="bg-surface-900 border border-surface-700 rounded-xl p-6">
+          <Card padding="md">
             <h2 className="text-lg font-semibold text-surface-100 mb-4">📑 Contas a Pagar / Receber</h2>
             <div className="space-y-2">
               {[
@@ -92,10 +94,10 @@ export default function FinanceiroDashboardPage() {
                 </div>
               ))}
             </div>
-          </div>
+          </Card>
 
           {/* Contas Bancárias */}
-          <div className="bg-surface-900 border border-surface-700 rounded-xl p-6">
+          <Card padding="md">
             <h2 className="text-lg font-semibold text-surface-100 mb-4">🏦 Contas Bancárias (RF-FIN-02)</h2>
             <div className="space-y-3">
               {[
@@ -112,11 +114,11 @@ export default function FinanceiroDashboardPage() {
                 </div>
               ))}
             </div>
-          </div>
+          </Card>
         </div>
 
         {/* Rendimento de Orçamentação */}
-        <div className="bg-surface-900 border border-surface-700 rounded-xl p-6">
+        <Card padding="md">
           <h2 className="text-lg font-semibold text-surface-100 mb-4">📉 Rendimento de Orçamentação — Conta 2.1.5.0.0 (RF-FIN-05)</h2>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -148,7 +150,7 @@ export default function FinanceiroDashboardPage() {
               </tbody>
             </table>
           </div>
-        </div>
+        </Card>
       </div>
     </DefaultLayout>
   );

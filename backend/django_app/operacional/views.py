@@ -89,6 +89,94 @@ class OrdemServicoViewSet(viewsets.ModelViewSet):
         )
         return Response({"detail": "OS Desbloqueada e Aprovada."}, status=status.HTTP_200_OK)
 
+    @action(detail=True, methods=['post'])
+    def salvar_diagnostico(self, request, pk=None):
+        """RF-OP-XX: Salva o diagnóstico técnico gerando o orçamento inicial (V1)."""
+        os = self.get_object()
+        
+        # Desativa orçamentos anteriores se houver refação de diagnóstico
+        os.orcamentos.update(is_active=False)
+        
+        try:
+            with transaction.atomic():
+                orcamento = Orcamento.objects.create(
+                    os=os,
+                    versao=1,
+                    is_active=True,
+                    status_aprovacao='aprovado',  # Dependendo da regra de negócio, pode ser rascunho
+                    valor_total=request.data.get('valor_total', 0)
+                )
+                
+                # Adiciona Serviços (Mão de Obra)
+                for servico in request.data.get('servicos', []):
+                    OrcamentoItem.objects.create(
+                        orcamento=orcamento,
+                        servico_id=servico.get('id'),
+                        quantidade=servico.get('quantidade', 1),
+                        valor_estimado=servico.get('valor_estimado', 0),
+                        origem='inicial'
+                    )
+                    
+                # Adiciona Peças
+                for peca in request.data.get('pecas', []):
+                    OrcamentoItem.objects.create(
+                        orcamento=orcamento,
+                        produto_id=peca.get('id'),
+                        quantidade=peca.get('quantidade', 1),
+                        valor_estimado=peca.get('valor_estimado', 0),
+                        origem='inicial'
+                    )
+                    
+                # Atualiza status da OS para o próximo estágio
+                os.status = StatusOS.AGUARDANDO_APROVACAO
+                os.save()
+                
+            serializer = OrcamentoSerializer(orcamento)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        except Exception as e:
+            return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=True, methods=['post'])
+    def concluir_e_faturar(self, request, pk=None):
+        """RF-OP-XX: Conclui a OS e emite faturamento (integração financeira)."""
+        os = self.get_object()
+        
+        # Opcional: Validar se a OS já está concluída ou faturada.
+        if os.status == StatusOS.CONCLUIDA:
+            return Response({"detail": "A OS já está concluída."}, status=status.HTTP_400_BAD_REQUEST)
+
+        with transaction.atomic():
+            # 1. Atualizar status da OS
+            os.status = StatusOS.CONCLUIDA
+            os.save()
+            
+            # 2. Gerar título a receber no financeiro (Integração)
+            # Para isso, usaremos o valor total do orçamento ativo
+            orcamento_ativo = os.orcamentos.filter(is_active=True).first()
+            valor_total = request.data.get('valor_total', orcamento_ativo.valor_total if orcamento_ativo else 0)
+            forma_pagamento = request.data.get('forma_pagamento', 'PIX')
+            
+            # Aqui poderíamos importar o model Titulo de financeiro e criar o registro
+            try:
+                from financeiro.models import Titulo, StatusTitulo
+                
+                Titulo.objects.create(
+                    os=os,
+                    cliente=os.veiculo.cliente if os.veiculo else None,
+                    valor_original=Decimal(str(valor_total)),
+                    valor_atualizado=Decimal(str(valor_total)),
+                    vencimento=os.atualizado_em.date(),
+                    data_competencia=os.atualizado_em.date(),
+                    status=StatusTitulo.PAGO if forma_pagamento in ['PIX', 'DINHEIRO', 'CARTAO_DEBITO'] else StatusTitulo.ABERTO,
+                )
+            except Exception as e:
+                import logging
+                logging.warning(f"Erro ao gerar título financeiro: {str(e)}")
+                # Não impede o faturamento no protótipo, mas em prod devíamos parar.
+
+        serializer = self.get_serializer(os)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
 
 class OrcamentoViewSet(viewsets.ModelViewSet):
     queryset = Orcamento.objects.all()

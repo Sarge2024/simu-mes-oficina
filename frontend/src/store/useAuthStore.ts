@@ -55,13 +55,9 @@ export function hasAccess(userRole: Role, requiredRoles: Role[]): boolean {
   return requiredRoles.some((r) => ROLE_HIERARCHY[userRole] >= ROLE_HIERARCHY[r]);
 }
 
-export function getDefaultRoute(role: Role): string {
-  switch (role) {
-    case 'ADMIN':       return '/admin';
-    case 'FINANCEIRO':  return '/financeiro';
-    case 'SUPERVISOR':  return '/supervisor';
-    case 'COLABORADOR': return '/oficina';
-  }
+export function getDefaultRoute(_role: Role): string {
+  // Agora todos caem no Launchpad (UI Inicial) após o login
+  return '/home';
 }
 
 export const useAuthStore = create<AuthState>()(
