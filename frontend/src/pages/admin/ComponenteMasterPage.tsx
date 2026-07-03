@@ -5,36 +5,13 @@ import DefaultLayout from '../../layouts/DefaultLayout';
 import Card from '../../components/shared/Card';
 import { AgGridReact } from 'ag-grid-react';
 import { ModuleRegistry, AllCommunityModule } from 'ag-grid-community';
-import type { ColDef, ICellRendererParams } from 'ag-grid-community';
+import type { ColDef } from 'ag-grid-community';
 
 // Import mandatory styles for AG Grid
 import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-alpine.css';
 
 ModuleRegistry.registerModules([AllCommunityModule]);
-
-// --- Cell Renderers (Outside component to avoid recreation/crashes) ---
-const StockBadge = (props: ICellRendererParams) => {
-  const value = props.value || 0;
-  return (
-    <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${Number(value) > 0 ? 'bg-accent-500/10 text-accent-400' : 'bg-danger-500/10 text-danger-400'}`}>
-      {value}
-    </span>
-  );
-};
-
-const ActionButton = ({ data, onSelect }: { data: any, onSelect: (id: number) => void }) => {
-  if (!data?.id) return null;
-  return (
-    <button
-      type="button"
-      onClick={() => onSelect(data.id)}
-      className="text-primary-400 hover:text-primary-300 font-medium text-xs"
-    >
-      Selecionar
-    </button>
-  );
-};
 
 export default function ComponenteMasterPage() {
   const navigate = useNavigate();
@@ -56,43 +33,28 @@ export default function ComponenteMasterPage() {
   const [newType, setNewType] = useState('');
   const [tiposExtras, setTiposExtras] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [localizacoes, setLocalizacoes] = useState<any[]>([]);
 
   useEffect(() => {
     carregarComponentes();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  useEffect(() => {
+    if (componenteAtual.id) {
+      fetch(`/api/django/api/suprimentos/localizacao/?componente=${componenteAtual.id}`)
+        .then(r => r.json())
+        .then(data => setLocalizacoes(data.results || []))
+        .catch(() => setLocalizacoes([]));
+    } else {
+      setLocalizacoes([]);
+    }
+  }, [componenteAtual.id]);
+
   const handleSalvar = async (e: React.FormEvent) => {
     e.preventDefault();
     await salvarComponente();
   };
-
-
-  const columnDefs = useMemo<ColDef[]>(() => [
-    { field: 'codigo_interno', headerName: 'SKU', width: 130, cellClass: 'font-mono text-primary-400' },
-    { field: 'descricao_generica', headerName: 'Descrição', flex: 1 },
-    { field: 'estoque_atual', headerName: 'Estoque', width: 100, cellRenderer: StockBadge, cellClass: 'text-center' },
-    { 
-      field: 'preco_venda', 
-      headerName: 'Preço', 
-      width: 120, 
-      valueFormatter: (p) => {
-        const val = Number(p.value);
-        return isNaN(val) ? 'R$ 0,00' : `R$ ${val.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
-      },
-      cellClass: 'text-right font-medium'
-    },
-    { 
-      headerName: 'Ação', 
-      width: 100, 
-      cellRenderer: (params: ICellRendererParams) => (
-        <ActionButton data={params.data} onSelect={selecionarComponente} />
-      ), 
-      cellClass: 'text-center', 
-      sortable: false, 
-      filter: false 
-    }
-  ], [selecionarComponente]);
 
   const columnDefsVeiculos = useMemo<ColDef[]>(() => [
     { field: 'marca_nome', headerName: 'Marca', width: 120 },
@@ -105,6 +67,23 @@ export default function ComponenteMasterPage() {
     { field: 'marca_nome', headerName: 'Marca / Fabricante', flex: 1 },
     { field: 'codigo_fabricante', headerName: 'Código do Produto', flex: 1, cellClass: 'font-mono text-primary-400' },
     { field: 'material_construcao', headerName: 'Material', width: 150 }
+  ], []);
+
+  const columnDefsLocalizacoes = useMemo<ColDef[]>(() => [
+    { field: 'fileira', headerName: 'Fileira', width: 90 },
+    {
+      field: 'lado', headerName: 'Lado', width: 80,
+      cellRenderer: (p: any) => (
+        <span className={p.value === 'D' ? 'text-blue-400 font-bold' : 'text-amber-400 font-bold'}>
+          {p.value === 'D' ? 'Dir' : 'Esq'}
+        </span>
+      ),
+    },
+    { field: 'nivel', headerName: 'Nível', width: 80 },
+    { field: 'bloco', headerName: 'Bloco', width: 90 },
+    { field: 'codigo', headerName: 'Código', width: 130, cellClass: 'font-mono text-primary-400 font-bold' },
+    { field: 'quantidade', headerName: 'Qtd', width: 70, cellClass: 'text-center font-bold' },
+    { field: 'capacidade', headerName: 'Cap.', width: 70, cellClass: 'text-center' },
   ], []);
 
   const defaultColDef = useMemo(() => ({ sortable: true, filter: true, resizable: true }), []);
@@ -369,6 +348,36 @@ export default function ComponenteMasterPage() {
                     columnDefs={columnDefsVeiculos}
                     defaultColDef={defaultColDef}
                     overlayNoRowsTemplate="Nenhum veículo compatível cadastrado para este componente."
+                  />
+                </div>
+              </Card>
+            )}
+
+            {/* Seção 5: Localizações no Depósito */}
+            {componenteAtual.id && (
+              <Card padding="md" className="border-surface-800">
+                <div className="flex items-center justify-between mb-5">
+                  <h2 className="text-lg font-semibold text-surface-100 flex items-center gap-2">
+                    <span className="w-8 h-8 rounded-lg bg-primary-500/20 text-primary-400 flex items-center justify-center text-sm">
+                      5
+                    </span>
+                    Localizações no Depósito
+                  </h2>
+                  <button
+                    type="button"
+                    onClick={() => navigate('/admin/localizacao-estoque')}
+                    className="px-3 py-1.5 bg-accent-500/10 text-accent-400 border border-accent-500/30 rounded-lg text-xs font-semibold hover:bg-accent-500/20 transition-colors"
+                  >
+                    + Gerenciar Localizações
+                  </button>
+                </div>
+                
+                <div className="ag-theme-alpine-dark w-full h-[200px]">
+                  <AgGridReact
+                    rowData={localizacoes}
+                    columnDefs={columnDefsLocalizacoes}
+                    defaultColDef={defaultColDef}
+                    overlayNoRowsTemplate="Nenhuma localização cadastrada para este componente."
                   />
                 </div>
               </Card>

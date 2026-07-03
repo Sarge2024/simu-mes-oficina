@@ -6,6 +6,7 @@ Tabelas: Op_OrdemServico, Op_Orcamento, Op_OrcamentoItem, Op_HistoricoAprovacao.
 
 from django.conf import settings
 from django.db import models
+from core.models import TenantModel
 
 
 # ──────────────────────────────────────────
@@ -21,7 +22,7 @@ class StatusOS(models.TextChoices):
     CANCELADA = "cancelada", "Cancelada"
 
 
-class OrdemServico(models.Model):
+class OrdemServico(TenantModel):
     """Ordem de Serviço da oficina."""
 
     veiculo = models.ForeignKey(
@@ -67,7 +68,7 @@ class StatusAprovacao(models.TextChoices):
     REJEITADO = "rejeitado", "Rejeitado"
 
 
-class Orcamento(models.Model):
+class Orcamento(TenantModel):
     """
     Orçamento vinculado a uma OS.
     Suporta versionamento: V1.0 (inicial), V1.1 (aditivo), etc.

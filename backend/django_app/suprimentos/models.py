@@ -1,9 +1,10 @@
 """
-Suprimentos — Requisições de compra e itens.
+Suprimentos — Requisições de compra, itens e localização de estoque.
 
-Tabelas: Sup_Requisicao, Sup_ItemRequisicao.
+Tabelas: Sup_Requisicao, Sup_ItemRequisicao, Sup_LocalizacaoEstoque.
 """
 from django.db import models
+from core.models import TenantModel
 
 
 class TipoRequisicao(models.TextChoices):
@@ -21,7 +22,7 @@ class StatusRequisicao(models.TextChoices):
     CANCELADA = "cancelada", "Cancelada"
 
 
-class Requisicao(models.Model):
+class Requisicao(TenantModel):
     os = models.ForeignKey("operacional.OrdemServico", on_delete=models.CASCADE, related_name="requisicoes")
     tipo = models.CharField(max_length=20, choices=TipoRequisicao.choices, default=TipoRequisicao.PRELIMINAR)
     status = models.CharField(max_length=20, choices=StatusRequisicao.choices, default=StatusRequisicao.ABERTA)
@@ -47,7 +48,7 @@ class StatusPedido(models.TextChoices):
     CONCLUIDO = "concluido", "Concluído"
     CANCELADO = "cancelado", "Cancelado"
 
-class PedidoCompra(models.Model):
+class PedidoCompra(TenantModel):
     fornecedor = models.ForeignKey("core.Cliente", on_delete=models.PROTECT, related_name="pedidos_compra")
     status = models.CharField(max_length=20, choices=StatusPedido.choices, default=StatusPedido.RASCUNHO)
     data_emissao = models.DateTimeField(auto_now_add=True)
@@ -91,7 +92,7 @@ class ItemRequisicao(models.Model):
         return f"Item #{self.pk}: {self.produto.codigo_interno} × {self.quantidade}"
 
 
-class EntradaNFe(models.Model):
+class EntradaNFe(TenantModel):
     chave_acesso_nfe = models.CharField("Chave de Acesso NFe", max_length=44, unique=True, help_text="44 dígitos numéricos")
     fornecedor = models.ForeignKey("core.Cliente", on_delete=models.PROTECT, related_name="entradas_nfe")
     data_emissao = models.DateField("Data de Emissão")
@@ -121,3 +122,83 @@ class ItemNFe(models.Model):
 
     def __str__(self):
         return f"{self.quantidade}x {self.componente.codigo_interno} (R$ {self.valor_unitario_compra})"
+
+
+# ──────────────────────────────────────────
+# Sup_LocalizacaoEstoque
+# ──────────────────────────────────────────
+class LadoEstoque(models.TextChoices):
+    ESQUERDA = "E", "Esquerda"
+    DIREITA = "D", "Direita"
+
+
+class LocalizacaoEstoque(TenantModel):
+    """Posição física de armazenamento no depósito da oficina.
+
+    Hierarquia: Local → Sala → Corredor → Lado → Bloco → Prateleira
+    Código auto-gerado: LOCAL-SALA-CORREDOR-LADO-BLOCO-PRATELEIRA
+    Exemplo: MATRIZ-S01-C01-E-B01-P01
+    """
+
+    local = models.CharField(
+        "Local", max_length=50, default="",
+        help_text="Local/filial do depósito. Ex: MATRIZ, FILIAL2.",
+    )
+    sala = models.CharField(
+        "Sala", max_length=20, default="",
+        help_text="Sala do depósito. Ex: S01, S02.",
+    )
+    corredor = models.CharField(
+        "Corredor", max_length=20, default="",
+        help_text="Corredor/rua do depósito. Ex: C01, C02.",
+    )
+    lado = models.CharField(
+        "Lado", max_length=1, choices=LadoEstoque.choices, default=LadoEstoque.ESQUERDA,
+        help_text="E = Esquerda, D = Direita.",
+    )
+    bloco = models.CharField(
+        "Bloco", max_length=10, default="",
+        help_text="Bloco/seção. Ex: B01, B02.",
+    )
+    prateleira = models.CharField(
+        "Prateleira", max_length=10, default="",
+        help_text="Nº da prateleira. Ex: P01, P02.",
+    )
+    codigo = models.CharField(
+        "Código da Posição", max_length=100, default="",
+        help_text="Auto-gerado: LOCAL-SALA-CORREDOR-LADO-BLOCO-PRATELEIRA. Ex: MATRIZ-S01-C01-E-B01-P01.",
+    )
+    capacidade = models.PositiveIntegerField(
+        "Capacidade", default=0,
+        help_text="Capacidade máxima da posição (0 = sem limite).",
+    )
+    quantidade = models.PositiveIntegerField(
+        "Quantidade Atual", default=0,
+        help_text="Quantidade de itens armazenados nesta posição.",
+    )
+    ativo = models.BooleanField("Ativo", default=True)
+    criado_em = models.DateTimeField("Criado em", auto_now_add=True)
+    atualizado_em = models.DateTimeField("Atualizado em", auto_now=True)
+
+    class Meta:
+        db_table = "sup_localizacao_estoque"
+        verbose_name = "Localização de Estoque"
+        verbose_name_plural = "Localizações de Estoque"
+        ordering = ["local", "sala", "corredor", "lado", "bloco", "prateleira"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["tenant", "codigo"],
+                name="uq_sup_localizacao_tenant_codigo",
+            )
+        ]
+
+    def save(self, *args, **kwargs):
+        self.codigo = (
+            f"{self.local.upper()}-{self.sala.upper()}-"
+            f"{self.corredor.upper()}-{self.lado.upper()}-"
+            f"{self.bloco.upper()}-{self.prateleira.upper()}"
+        )
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.codigo}"

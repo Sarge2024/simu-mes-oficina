@@ -6,12 +6,13 @@ from decimal import Decimal
 
 from .models import OrdemServico, Orcamento, OrcamentoItem, HistoricoAprovacao, RecursoFisico, Alocacao, StatusOS
 from .serializers import (
-    OrdemServicoSerializer, OrcamentoSerializer, OrcamentoItemSerializer, 
+    OrdemServicoSerializer, OrcamentoSerializer, OrcamentoItemSerializer,
     HistoricoAprovacaoSerializer, RecursoFisicoSerializer, AlocacaoSerializer
 )
+from core.views import TenantModelViewSet
 from governanca.models import Parametro
 
-class OrdemServicoViewSet(viewsets.ModelViewSet):
+class OrdemServicoViewSet(TenantModelViewSet):
     queryset = OrdemServico.objects.all()
     serializer_class = OrdemServicoSerializer
 
@@ -178,13 +179,20 @@ class OrdemServicoViewSet(viewsets.ModelViewSet):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-class OrcamentoViewSet(viewsets.ModelViewSet):
+class OrcamentoViewSet(TenantModelViewSet):
     queryset = Orcamento.objects.all()
     serializer_class = OrcamentoSerializer
 
 class OrcamentoItemViewSet(viewsets.ModelViewSet):
     queryset = OrcamentoItem.objects.all()
     serializer_class = OrcamentoItemSerializer
+
+    def get_queryset(self):
+        from core.middleware import get_current_tenant
+        tenant_id = get_current_tenant()
+        if tenant_id:
+            return OrcamentoItem.objects.filter(orcamento__tenant_id=tenant_id)
+        return OrcamentoItem.objects.none()
 
 class RecursoFisicoViewSet(viewsets.ModelViewSet):
     queryset = RecursoFisico.objects.all()
@@ -193,3 +201,10 @@ class RecursoFisicoViewSet(viewsets.ModelViewSet):
 class AlocacaoViewSet(viewsets.ModelViewSet):
     queryset = Alocacao.objects.all()
     serializer_class = AlocacaoSerializer
+
+    def get_queryset(self):
+        from core.middleware import get_current_tenant
+        tenant_id = get_current_tenant()
+        if tenant_id:
+            return Alocacao.objects.filter(os__tenant_id=tenant_id)
+        return Alocacao.objects.none()

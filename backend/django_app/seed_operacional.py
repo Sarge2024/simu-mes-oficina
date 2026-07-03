@@ -20,6 +20,7 @@ def seed_operacional():
     cliente, _ = Cliente.objects.get_or_create(
         nome_razao="Transportadora Norte",
         defaults={
+            "tenant_id": 1,
             "apelido_fantasia": "TransNorte",
             "cpf_cnpj": "12345678000199",
             "email": "contato@transnorte.com.br"
@@ -34,6 +35,7 @@ def seed_operacional():
     veiculo, _ = Ativo.objects.get_or_create(
         placa="ABC-1234",
         defaults={
+            "tenant_id": 1,
             "cliente": cliente,
             "versao": versao,
             "ano_fabricacao": 2015,
@@ -62,6 +64,7 @@ def seed_operacional():
     os101, _ = OrdemServico.objects.get_or_create(
         id=101,
         defaults={
+            "tenant_id": 1,
             "veiculo": veiculo,
             "status": StatusOS.EM_DIAGNOSTICO,
             "descricao_problema": "Vazamento de óleo e fumaça azulada",
@@ -73,6 +76,7 @@ def seed_operacional():
     os103, _ = OrdemServico.objects.get_or_create(
         id=103,
         defaults={
+            "tenant_id": 1,
             "veiculo": veiculo,
             "status": StatusOS.EM_EXECUCAO,
             "descricao_problema": "Revisão Geral",
@@ -85,6 +89,7 @@ def seed_operacional():
         os=os103,
         versao=1,
         defaults={
+            "tenant_id": 1,
             "is_active": True,
             "status_aprovacao": "aprovado",
             "valor_total": 500.00

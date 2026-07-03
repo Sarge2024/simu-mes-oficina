@@ -47,3 +47,6 @@ django.log
 antigravity-accounts.json
 antigravity.json
 opencode.json
+
+# Ignorar pasta Docs
+Docs/

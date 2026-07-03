@@ -4,22 +4,30 @@ from rest_framework.response import Response
 from django.db import transaction
 from decimal import Decimal
 
-from .models import Requisicao, ItemRequisicao, PedidoCompra, StatusCompra, TipoRequisicao
-from .serializers import RequisicaoSerializer, ItemRequisicaoSerializer, PedidoCompraSerializer
+from .models import Requisicao, ItemRequisicao, PedidoCompra, StatusCompra, TipoRequisicao, LocalizacaoEstoque
+from .serializers import RequisicaoSerializer, ItemRequisicaoSerializer, PedidoCompraSerializer, LocalizacaoEstoqueSerializer
 
+from core.views import TenantModelViewSet
 from financeiro.models import PlanoContas, Titulo, Transacao, StatusTitulo
 
-class PedidoCompraViewSet(viewsets.ModelViewSet):
+class PedidoCompraViewSet(TenantModelViewSet):
     queryset = PedidoCompra.objects.all()
     serializer_class = PedidoCompraSerializer
 
-class RequisicaoViewSet(viewsets.ModelViewSet):
+class RequisicaoViewSet(TenantModelViewSet):
     queryset = Requisicao.objects.all()
     serializer_class = RequisicaoSerializer
 
 class ItemRequisicaoViewSet(viewsets.ModelViewSet):
     queryset = ItemRequisicao.objects.all()
     serializer_class = ItemRequisicaoSerializer
+
+    def get_queryset(self):
+        from core.middleware import get_current_tenant
+        tenant_id = get_current_tenant()
+        if tenant_id:
+            return ItemRequisicao.objects.filter(requisicao__tenant_id=tenant_id)
+        return ItemRequisicao.objects.none()
 
     @action(detail=True, methods=['post'])
     def receber(self, request, pk=None):
@@ -72,3 +80,27 @@ class ItemRequisicaoViewSet(viewsets.ModelViewSet):
                             )
                             
         return Response({"detail": "Item recebido e variação contabilizada."}, status=status.HTTP_200_OK)
+
+
+class LocalizacaoEstoqueViewSet(TenantModelViewSet):
+    queryset = LocalizacaoEstoque.objects.all()
+    serializer_class = LocalizacaoEstoqueSerializer
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        local = self.request.query_params.get('local')
+        if local:
+            qs = qs.filter(local__iexact=local)
+        sala = self.request.query_params.get('sala')
+        if sala:
+            qs = qs.filter(sala__iexact=sala)
+        corredor = self.request.query_params.get('corredor')
+        if corredor:
+            qs = qs.filter(corredor__iexact=corredor)
+        lado = self.request.query_params.get('lado')
+        if lado:
+            qs = qs.filter(lado__iexact=lado)
+        bloco = self.request.query_params.get('bloco')
+        if bloco:
+            qs = qs.filter(bloco__iexact=bloco)
+        return qs

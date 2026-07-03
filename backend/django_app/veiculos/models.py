@@ -200,7 +200,9 @@ class CotacaoMercado(models.Model):
 # ──────────────────────────────────────────
 # Veic_Ativo
 # ──────────────────────────────────────────
-class Ativo(models.Model):
+from core.models import TenantModel
+
+class Ativo(TenantModel):
     """Veículo cadastrado de um cliente."""
 
     placa = models.CharField("Placa", max_length=10, unique=True)

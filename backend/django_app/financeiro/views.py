@@ -7,11 +7,13 @@ from decimal import Decimal
 from .models import Titulo, Transacao, Renegociacao, PlanoContas, ContaBancaria, StatusTitulo
 from .serializers import TituloSerializer, TransacaoSerializer, ContaBancariaSerializer, PlanoContasSerializer
 
-class ContaBancariaViewSet(viewsets.ModelViewSet):
+from core.views import TenantModelViewSet
+
+class ContaBancariaViewSet(TenantModelViewSet):
     queryset = ContaBancaria.objects.all()
     serializer_class = ContaBancariaSerializer
 
-class TituloViewSet(viewsets.ModelViewSet):
+class TituloViewSet(TenantModelViewSet):
     queryset = Titulo.objects.all()
     serializer_class = TituloSerializer
 
@@ -56,11 +58,12 @@ class TituloViewSet(viewsets.ModelViewSet):
         serializer = TituloSerializer(titulos_criados, many=True)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-class TransacaoViewSet(viewsets.ModelViewSet):
+class TransacaoViewSet(TenantModelViewSet):
     queryset = Transacao.objects.all()
     serializer_class = TransacaoSerializer
 
 class PlanoContasViewSet(viewsets.ModelViewSet):
+    """Plano de Contas é global (compartilhado entre tenants)."""
     queryset = PlanoContas.objects.all()
     serializer_class = PlanoContasSerializer
     ordering_fields = ['codigo']

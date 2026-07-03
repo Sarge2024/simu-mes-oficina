@@ -2,13 +2,14 @@ from rest_framework import serializers, viewsets
 from .models import MovimentoSocio
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
+from core.views import TenantModelViewSet
 
 class MovimentoSocioSerializer(serializers.ModelSerializer):
     class Meta:
         model = MovimentoSocio
         fields = '__all__'
 
-class MovimentoSocioViewSet(viewsets.ModelViewSet):
+class MovimentoSocioViewSet(TenantModelViewSet):
     queryset = MovimentoSocio.objects.all()
     serializer_class = MovimentoSocioSerializer
 

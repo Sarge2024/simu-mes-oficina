@@ -52,6 +52,19 @@ class EmpresaFilial(models.Model):
     def __str__(self):
         return f"{self.razao_social} ({self.cnpj})"
 
+class TenantModel(models.Model):
+    """Modelo base para adicionar a funcionalidade multitenant (vinculado a EmpresaFilial)."""
+    tenant = models.ForeignKey(
+        EmpresaFilial,
+        on_delete=models.CASCADE,
+        related_name="%(app_label)s_%(class)s_related",
+        verbose_name="Tenant (Empresa)",
+        null=True,  # Initially null for migrations
+    )
+
+    class Meta:
+        abstract = True
+
 
 # ──────────────────────────────────────────
 # Core_Cliente
@@ -65,7 +78,7 @@ class TipoPessoa(models.TextChoices):
     PF = "pf", "Pessoa Física"
     PJ = "pj", "Pessoa Jurídica"
 
-class Cliente(models.Model):
+class Cliente(TenantModel):
     """Parceiro de negócios (Cliente e/ou Fornecedor)."""
 
     tipo_pessoa = models.CharField("Tipo de Pessoa", max_length=2, choices=TipoPessoa.choices, default=TipoPessoa.PF)
@@ -74,7 +87,7 @@ class Cliente(models.Model):
 
     nome_razao = models.CharField("Nome / Razão Social", max_length=255)
     apelido_fantasia = models.CharField("Apelido / Nome Fantasia", max_length=255, blank=True, default="")
-    cpf_cnpj = models.CharField("CPF / CNPJ", max_length=18, unique=True)
+    cpf_cnpj = models.CharField("CPF / CNPJ", max_length=18)
     telefone = models.CharField("Telefone", max_length=20, blank=True, default="")
     email = models.EmailField("E-mail", blank=True, default="")
     cep = models.CharField("CEP", max_length=10, blank=True, default="")
@@ -107,6 +120,12 @@ class Cliente(models.Model):
         verbose_name = "Parceiro de Negócios"
         verbose_name_plural = "Parceiros de Negócios"
         ordering = ["nome_razao"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["tenant", "cpf_cnpj"],
+                name="uq_core_cliente_tenant_cpf_cnpj",
+            )
+        ]
 
     def __str__(self):
         return f"{self.nome_razao} ({self.cpf_cnpj})"
@@ -115,7 +134,7 @@ class Cliente(models.Model):
 # ──────────────────────────────────────────
 # Core_Colaborador
 # ──────────────────────────────────────────
-class Colaborador(models.Model):
+class Colaborador(TenantModel):
     """Colaborador interno (mecânico, eletricista, etc.)."""
 
     nome = models.CharField("Nome", max_length=255)

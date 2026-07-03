@@ -4,6 +4,7 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from .models import Marca, Modelo, Versao, CotacaoMercado, Ativo, Motor, Categoria
 from .serializers import MarcaSerializer, ModeloSerializer, VersaoSerializer, CotacaoMercadoSerializer, AtivoSerializer, MotorSerializer, CategoriaSerializer
+from core.views import TenantModelViewSet
 
 class CategoriaViewSet(viewsets.ModelViewSet):
     queryset = Categoria.objects.all()
@@ -60,13 +61,13 @@ class CotacaoMercadoViewSet(viewsets.ModelViewSet):
     serializer_class = CotacaoMercadoSerializer
     permission_classes = [AllowAny]
 
-class AtivoViewSet(viewsets.ModelViewSet):
+class AtivoViewSet(TenantModelViewSet):
     serializer_class = AtivoSerializer
     permission_classes = [AllowAny]
 
     def get_queryset(self):
         # Sempre filtrar por ativo=True para ocultar os soft-deleted
-        queryset = Ativo.objects.select_related('versao__modelo__marca', 'cliente').filter(ativo=True)
+        queryset = super().get_queryset().select_related('versao__modelo__marca', 'cliente').filter(ativo=True)
         placa = self.request.query_params.get('placa', None)
         if placa is not None:
             # Normaliza a placa removendo hífens e espaços

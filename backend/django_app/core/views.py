@@ -13,13 +13,33 @@ from .serializers import EmpresaFilialSerializer, ClienteSerializer, AuditLogSer
 logger = logging.getLogger(__name__)
 
 
+from .middleware import get_current_tenant, is_master_request
+
+class TenantModelViewSet(viewsets.ModelViewSet):
+    """ViewSet base que filtra o queryset pelo tenant atual e define o tenant na criação."""
+    
+    def get_queryset(self):
+        qs = super().get_queryset()
+        tenant_id = get_current_tenant()
+        if tenant_id:
+            return qs.filter(tenant_id=tenant_id)
+        # MASTER sem tenant selecionado → visão global de todos os registros
+        if is_master_request():
+            return qs
+        return qs.none()
+
+    def perform_create(self, serializer):
+        tenant_id = get_current_tenant()
+        serializer.save(tenant_id=tenant_id)
+
+
 class EmpresaFilialViewSet(viewsets.ModelViewSet):
     queryset = EmpresaFilial.objects.all()
     serializer_class = EmpresaFilialSerializer
     permission_classes = [permissions.AllowAny]
 
 
-class ClienteViewSet(viewsets.ModelViewSet):
+class ClienteViewSet(TenantModelViewSet):
     queryset = Cliente.objects.all()
     serializer_class = ClienteSerializer
     permission_classes = [permissions.AllowAny]

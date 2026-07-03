@@ -2,6 +2,7 @@
 Financeiro — Plano de Contas, Títulos, Transações, Renegociação, Ciclos e Metas.
 """
 from django.db import models
+from core.models import TenantModel
 
 
 class TipoNatureza(models.TextChoices):
@@ -29,7 +30,7 @@ class PlanoContas(models.Model):
         return f"{self.codigo} — {self.descricao}"
 
 
-class ContaBancaria(models.Model):
+class ContaBancaria(TenantModel):
     """Contas de saldo (Bancos, Caixas, Cartões) para Gestão de Múltiplas Contas."""
     nome = models.CharField("Nome da Conta", max_length=100)
     tipo = models.CharField("Tipo", max_length=50, help_text="Ex: Corrente, Poupança, Caixa, Cartão")
@@ -55,7 +56,7 @@ class StatusTitulo(models.TextChoices):
     CANCELADO = "cancelado", "Cancelado"
 
 
-class Titulo(models.Model):
+class Titulo(TenantModel):
     os = models.ForeignKey("operacional.OrdemServico", on_delete=models.PROTECT, related_name="titulos")
     cliente = models.ForeignKey("core.Cliente", on_delete=models.PROTECT, related_name="titulos")
     valor_original = models.DecimalField(max_digits=14, decimal_places=2)
@@ -76,7 +77,7 @@ class Titulo(models.Model):
         return f"Título #{self.pk} — R${self.valor_atualizado} [{self.get_status_display()}]"
 
 
-class Transacao(models.Model):
+class Transacao(TenantModel):
     titulo = models.ForeignKey(Titulo, on_delete=models.CASCADE, related_name="transacoes")
     plano_contas = models.ForeignKey(PlanoContas, on_delete=models.PROTECT, related_name="transacoes")
     conta_bancaria = models.ForeignKey(ContaBancaria, on_delete=models.PROTECT, related_name="transacoes", null=True, blank=True)
@@ -101,7 +102,7 @@ class Transacao(models.Model):
         return f"Tx #{self.pk} — R${self.valor_pago} ({self.data_caixa})"
 
 
-class Renegociacao(models.Model):
+class Renegociacao(TenantModel):
     titulo_antigo = models.ForeignKey(Titulo, on_delete=models.PROTECT, related_name="renegociacoes_origem")
     titulo_novo = models.ForeignKey(Titulo, on_delete=models.PROTECT, related_name="renegociacoes_destino")
     valor_acrescimo = models.DecimalField(max_digits=14, decimal_places=2, default=0)
@@ -124,7 +125,7 @@ class StatusCiclo(models.TextChoices):
     ENCERRADO = "encerrado", "Encerrado"
 
 
-class CicloOrcamento(models.Model):
+class CicloOrcamento(TenantModel):
     ano = models.PositiveSmallIntegerField("Ano")
     quadrimestre = models.PositiveSmallIntegerField("Quadrimestre", help_text="1, 2 ou 3")
     status = models.CharField(max_length=20, choices=StatusCiclo.choices, default=StatusCiclo.PLANEJAMENTO)
@@ -142,7 +143,7 @@ class CicloOrcamento(models.Model):
         return f"{self.ano} Q{self.quadrimestre}"
 
 
-class MetaConta(models.Model):
+class MetaConta(TenantModel):
     ciclo = models.ForeignKey(CicloOrcamento, on_delete=models.CASCADE, related_name="metas")
     plano_contas = models.ForeignKey(PlanoContas, on_delete=models.PROTECT, related_name="metas")
     meta_valor = models.DecimalField("Meta R$", max_digits=14, decimal_places=2, default=0)

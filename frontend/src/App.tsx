@@ -4,12 +4,16 @@ import ProtectedRoute from './components/ProtectedRoute';
 import LoginPage from './pages/auth/LoginPage';
 import HomePage from './pages/HomePage';
 import AdminDashboardPage from './pages/admin/AdminDashboardPage';
+import MasterDashboardPage from './pages/admin/MasterDashboardPage';
 import EmpresaMasterPage from './pages/admin/EmpresaMasterPage';
+import UsuarioMasterPage from './pages/admin/UsuarioMasterPage';
+import ParametroMasterPage from './pages/admin/ParametroMasterPage';
 import VeiculoMasterPage from './pages/admin/VeiculoMasterPage';
 import ClienteMasterPage from './pages/admin/ClienteMasterPage';
 import ComponenteMasterPage from './pages/admin/ComponenteMasterPage';
 import ReferenciaFabricantePage from './pages/admin/ReferenciaFabricantePage';
 import ServicoMasterPage from './pages/admin/ServicoMasterPage';
+import LocalizacaoEstoquePage from './pages/admin/LocalizacaoEstoquePage';
 import RevisionControlPage from './pages/admin/RevisionControlPage';
 import FinanceiroDashboardPage from './pages/financeiro/FinanceiroDashboardPage';
 import PlanoContasPage from './pages/financeiro/PlanoContasPage';
@@ -61,15 +65,23 @@ function App() {
         {/* Home / Launchpad */}
         <Route path="/home" element={<ProtectedRoute allowedRoles={['COLABORADOR']}><HomePage /></ProtectedRoute>} />
 
+        {/* Admin Master Routes */}
+        <Route element={<ProtectedRoute allowedRoles={['MASTER']} />}>
+          <Route path="/admin/master" element={<MasterDashboardPage />} />
+          <Route path="/admin/empresas" element={<EmpresaMasterPage />} />
+          <Route path="/admin/usuarios" element={<UsuarioMasterPage />} />
+          <Route path="/admin/parametros" element={<ParametroMasterPage />} />
+        </Route>
+
         {/* Admin Routes */}
         <Route element={<ProtectedRoute allowedRoles={['ADMIN']} />}>
           <Route path="/admin" element={<AdminDashboardPage />} />
-          <Route path="/admin/empresas" element={<EmpresaMasterPage />} />
           <Route path="/admin/veiculos" element={<VeiculoMasterPage />} />
           <Route path="/admin/clientes" element={<ClienteMasterPage />} />
           <Route path="/admin/componentes" element={<ComponenteMasterPage />} />
           <Route path="/admin/componentes/:id/referencias" element={<ReferenciaFabricantePage />} />
           <Route path="/admin/servicos" element={<ServicoMasterPage />} />
+          <Route path="/admin/localizacao-estoque" element={<LocalizacaoEstoquePage />} />
           <Route path="/admin/revisoes" element={<RevisionControlPage />} />
           <Route path="/admin/catalogo" element={<VeiculoCatalogoPage />} />
         </Route>

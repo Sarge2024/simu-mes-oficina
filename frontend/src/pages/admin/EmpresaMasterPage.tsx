@@ -5,6 +5,7 @@ import { ModuleRegistry, AllCommunityModule } from 'ag-grid-community';
 import type { ColDef, ICellRendererParams } from 'ag-grid-community';
 import { useUISettingsStore, ACCENT_MAP } from '../../store/useUISettingsStore';
 import Card from '../../components/shared/Card';
+import { djangoApi } from '../../lib/api';
 
 ModuleRegistry.registerModules([AllCommunityModule]);
 
@@ -31,8 +32,8 @@ export default function EmpresaMasterPage() {
 
   const fetchEmpresas = async () => {
     try {
-      const res = await fetch('/api/django/api/core/empresas/');
-      const data = await res.json();
+      const res = await djangoApi.get('/core/empresas/');
+      const data = res.data;
       setEmpresas(Array.isArray(data) ? data : (data.results || []));
     } catch (err) {
       console.error('Error fetching empresas:', err);
@@ -48,22 +49,22 @@ export default function EmpresaMasterPage() {
     e.preventDefault();
     const isEditing = !!editingEmpresa?.id;
     const url = isEditing 
-      ? `/api/django/api/core/empresas/${editingEmpresa.id}/`
-      : `/api/django/api/core/empresas/`;
+      ? `/core/empresas/${editingEmpresa.id}/`
+      : `/core/empresas/`;
     
-    const method = isEditing ? 'PUT' : 'POST';
+    const payload = {
+      ...editingEmpresa,
+      configuracoes: typeof editingEmpresa?.configuracoes === 'string' 
+        ? JSON.parse(editingEmpresa.configuracoes) 
+        : (editingEmpresa?.configuracoes || {})
+    };
 
     try {
-      await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...editingEmpresa,
-          configuracoes: typeof editingEmpresa?.configuracoes === 'string' 
-            ? JSON.parse(editingEmpresa.configuracoes) 
-            : (editingEmpresa?.configuracoes || {})
-        }),
-      });
+      if (isEditing) {
+        await djangoApi.put(url, payload);
+      } else {
+        await djangoApi.post(url, payload);
+      }
       setIsDrawerOpen(false);
       setEditingEmpresa(null);
       fetchEmpresas();
@@ -75,7 +76,7 @@ export default function EmpresaMasterPage() {
   const handleDelete = async (id: number) => {
     if (!confirm('Deseja realmente excluir esta empresa?')) return;
     try {
-      await fetch(`/api/django/api/core/empresas/${id}/`, { method: 'DELETE' });
+      await djangoApi.delete(`/core/empresas/${id}/`);
       fetchEmpresas();
     } catch (err) {
       console.error('Error deleting empresa:', err);

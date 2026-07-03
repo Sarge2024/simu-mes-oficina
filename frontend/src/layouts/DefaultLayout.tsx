@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore, hasAccess } from '../store/useAuthStore';
 import { useUISettingsStore, ACCENT_MAP } from '../store/useUISettingsStore';
+import TenantSwitcher from '../components/shared/TenantSwitcher';
 import type { Role } from '../store/useAuthStore';
 
 interface DefaultLayoutProps {
@@ -20,15 +21,26 @@ interface NavItem {
 const NAV_ITEMS: NavItem[] = [
   { label: 'Home', icon: '🏠', href: '/home', roles: ['COLABORADOR', 'SUPERVISOR', 'FINANCEIRO', 'ADMIN'] },
   {
+    label: 'Master Admin',
+    icon: '👑',
+    roles: ['MASTER'],
+    subItems: [
+      { label: 'Painel Master', href: '/admin/master', roles: ['MASTER'] },
+      { label: 'Empresas', href: '/admin/empresas', roles: ['MASTER'] },
+      { label: 'Usuários', href: '/admin/usuarios', roles: ['MASTER'] },
+      { label: 'Parâmetros', href: '/admin/parametros', roles: ['MASTER'] },
+    ]
+  },
+  {
     label: 'Administrativo',
     icon: '🛡️',
     roles: ['ADMIN'],
     subItems: [
       { label: 'Painel Admin', href: '/admin', roles: ['ADMIN'] },
-      { label: 'Cadastro Empresas', href: '/admin/empresas', roles: ['ADMIN'] },
       { label: 'Cadastro Clientes', href: '/admin/clientes', roles: ['ADMIN'] },
       { label: 'Cadastro Veículo/Propr', href: '/admin/veiculos', roles: ['ADMIN', 'FINANCEIRO', 'SUPERVISOR', 'COLABORADOR'] },
-      { label: 'Cadastro Estoque', href: '/admin/componentes', roles: ['ADMIN', 'FINANCEIRO', 'SUPERVISOR'] },
+      { label: 'Peças/Insumos', href: '/admin/componentes', roles: ['ADMIN', 'FINANCEIRO', 'SUPERVISOR'] },
+      { label: 'Posições do Estoque', href: '/admin/localizacao-estoque', roles: ['ADMIN', 'SUPERVISOR'] },
       { label: 'Cadastro Serviços', href: '/admin/servicos', roles: ['ADMIN', 'SUPERVISOR'] },
     ]
   },
@@ -153,6 +165,11 @@ export default function DefaultLayout({ children }: DefaultLayoutProps) {
           <button className="lg:hidden p-2 text-surface-400 hover:text-white" onClick={() => setMobileMenuOpen(false)}>
             ✕
           </button>
+        </div>
+
+        {/* Tenant Switcher (Master only) */}
+        <div className="px-3 py-2 border-b border-surface-700">
+          <TenantSwitcher />
         </div>
 
         <nav className={`flex-1 py-4 px-3 ${settings.compactMode ? 'space-y-0.5' : 'space-y-1'} overflow-y-auto overflow-x-hidden`}>

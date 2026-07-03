@@ -1,5 +1,6 @@
 """Societário — Movimentos de sócios vinculados a transações financeiras."""
 from django.db import models
+from core.models import TenantModel
 
 
 class CategoriaPessoal(models.TextChoices):
@@ -14,7 +15,7 @@ class CategoriaPessoal(models.TextChoices):
     OUTROS = "outros", "Outros"
 
 
-class MovimentoSocio(models.Model):
+class MovimentoSocio(TenantModel):
     transacao = models.ForeignKey("financeiro.Transacao", on_delete=models.CASCADE, related_name="movimentos_socio")
     socio = models.ForeignKey("core.Colaborador", on_delete=models.PROTECT, related_name="movimentos_societarios",
                               help_text="Colaborador com perfil de sócio.")

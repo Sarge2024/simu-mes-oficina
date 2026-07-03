@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Requisicao, ItemRequisicao, PedidoCompra
+from .models import Requisicao, ItemRequisicao, PedidoCompra, LocalizacaoEstoque
 
 class PedidoCompraSerializer(serializers.ModelSerializer):
     class Meta:
@@ -16,3 +16,9 @@ class RequisicaoSerializer(serializers.ModelSerializer):
     class Meta:
         model = Requisicao
         fields = '__all__'
+
+class LocalizacaoEstoqueSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = LocalizacaoEstoque
+        fields = '__all__'
+        read_only_fields = ('codigo',)
